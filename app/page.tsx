@@ -58,6 +58,48 @@ const steps: [string, string][] = [
   ["Download", "Full resolution, no watermark, yours outright. One click adds the MLS \"Virtually staged\" disclosure label."],
 ];
 
+const offerings: {
+  id: string;
+  tag: string;
+  title: string;
+  body: string;
+  before: string;
+  after: string;
+  beforeLabel: string;
+  afterLabel: string;
+}[] = [
+  {
+    id: "staging",
+    tag: "Virtual staging",
+    title: "Furnish empty rooms.",
+    body: "Upload a bare room and get it back professionally furnished in minutes, in any of 16 styles. Walls, windows, floors and the camera angle stay exactly as photographed — only furniture and decor are added. It's the highest-impact edit an agent can make: staged listings pull far more buyer attention than empty ones.",
+    before: "/demo/before.jpg",
+    after: "/demo/stage-after.jpg",
+    beforeLabel: "Empty",
+    afterLabel: "Staged",
+  },
+  {
+    id: "declutter",
+    tag: "Declutter & item removal",
+    title: "Clear out the clutter.",
+    body: "Occupied home full of the seller's furniture, boxes and personal items? Strip it back to a clean, empty room — the floors and walls behind removed objects are reconstructed. It's the essential first step for lived-in listings, before you restage them.",
+    before: "/demo/bed-after.jpg",
+    after: "/demo/bed-before.jpg",
+    beforeLabel: "Cluttered",
+    afterLabel: "Cleared",
+  },
+  {
+    id: "enhance",
+    tag: "Photo enhancement",
+    title: "Fix the light and sky.",
+    body: "Correct exposure and white balance, lift dark rooms, recover blown-out windows and drop in a clean blue sky — without moving a single object in the room. It's the low-cost edit nearly every listing photo needs, plus day-to-dusk twilight conversion for a standout hero shot.",
+    before: "/demo/before.jpg",
+    after: "/demo/enhance-after.jpg",
+    beforeLabel: "As shot",
+    afterLabel: "Enhanced",
+  },
+];
+
 const comparison: [string, string, string, string][] = [
   ["Cost for 8 photos", "$8", "$128–$240", "$2,000–$6,000"],
   ["Turnaround", "Minutes", "24–48 hours", "1–2 weeks"],
@@ -75,6 +117,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <span className="font-serif text-2xl">Staged.</span>
           <nav className="flex items-center gap-6 text-sm text-muted">
+            <a href="#offerings" className="hidden hover:text-ink sm:block">What it does</a>
             <a href="#styles" className="hidden hover:text-ink sm:block">Styles</a>
             <a href="#pricing" className="hidden hover:text-ink sm:block">Pricing</a>
             <a href="#faq" className="hidden hover:text-ink sm:block">FAQ</a>
@@ -170,8 +213,45 @@ export default function Home() {
       </div>
 
       <main className="mx-auto max-w-6xl px-6">
+        {/* Core offerings */}
+        <section id="offerings" className="py-20 md:py-28">
+          <Reveal>
+            <div className="max-w-2xl">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">What Staged does</p>
+              <h2 className="mt-3 font-serif text-4xl">Three edits that make a listing sell.</h2>
+              <p className="mt-4 leading-relaxed text-muted">
+                The jobs agents pay photo editors for most — staging, decluttering and
+                enhancement — each powered by the best AI image models tuned with real-estate
+                staging know-how. Drag any divider below: it&rsquo;s the same room, same angle,
+                professionally transformed.
+              </p>
+            </div>
+          </Reveal>
+          <div className="mt-12 space-y-16">
+            {offerings.map((o, i) => (
+              <Reveal key={o.id} delay={i * 80}>
+                <div className="grid items-center gap-8 md:grid-cols-2">
+                  <div className={i % 2 === 1 ? "md:order-2" : ""}>
+                    <BeforeAfterSlider
+                      before={o.before}
+                      after={o.after}
+                      beforeLabel={o.beforeLabel}
+                      afterLabel={o.afterLabel}
+                    />
+                  </div>
+                  <div className={i % 2 === 1 ? "md:order-1" : ""}>
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">{o.tag}</p>
+                    <h3 className="mt-2 font-serif text-3xl">{o.title}</h3>
+                    <p className="mt-4 max-w-md leading-relaxed text-muted">{o.body}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
         {/* Style gallery */}
-        <section id="styles" className="py-20 md:py-28">
+        <section id="styles" className="border-t border-line py-20 md:py-28">
           <Reveal>
             <div className="max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">One photo, many directions</p>
@@ -188,33 +268,6 @@ export default function Home() {
           <Reveal delay={100} className="mt-10">
             <StyleGallery />
           </Reveal>
-        </section>
-
-        {/* Bedroom + declutter */}
-        <section className="border-t border-line py-20 md:py-28">
-          <div className="grid gap-12 md:grid-cols-2 md:items-center">
-            <Reveal>
-              <BeforeAfterSlider before="/demo/bed-before.jpg" after="/demo/bed-after.jpg" />
-            </Reveal>
-            <Reveal delay={100}>
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Every room type</p>
-              <h2 className="mt-3 font-serif text-4xl">Bedrooms, kitchens, offices, patios.</h2>
-              <p className="mt-4 max-w-md leading-relaxed text-muted">
-                Tell it the room type and it furnishes accordingly — beds in
-                bedrooms, dining sets in dining rooms, desks in the home office.
-                The architecture never changes: walls, windows, floors and light
-                stay exactly as photographed.
-              </p>
-              <p className="mt-4 max-w-md leading-relaxed text-muted">
-                Occupied listing full of the seller&rsquo;s stuff?{" "}
-                <span className="text-ink">Declutter mode</span> empties the room
-                first. Dark, badly-lit photos? <span className="text-ink">Enhance
-                mode</span> fixes exposure, white balance and window views without
-                touching the contents — the $2–4/photo edit every listing photo
-                shop sells, one credit here.
-              </p>
-            </Reveal>
-          </div>
         </section>
 
         {/* How it works */}

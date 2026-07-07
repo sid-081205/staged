@@ -237,12 +237,12 @@ export function buildPrompt(style: StyleKey, room: RoomKey, extra?: string | nul
 
   return (
     [
-      `Virtually stage this real estate photo of a ${roomLabel}.`,
-      `Furnish it with realistic, correctly scaled ${STYLES[style].prompt}.`,
-      `Choose pieces appropriate for a ${roomLabel} and arrange them naturally for the space.`,
-      "CRITICAL: do not change the room's architecture, walls, windows, doors, flooring, ceiling, built-in fixtures, wall color, or camera angle in any way. Do not add or remove windows, doors or built-ins.",
-      "Match the lighting, shadows and white balance of the original photo exactly.",
-      "The result must look like a professional real estate photograph of the exact same room, professionally staged. Photorealistic. No people, no text.",
+      `Virtually stage this real estate photo of a ${roomLabel}. Treat the attached photo as the exact base image and EDIT it in place — do NOT invent, redraw or substitute a different room.`,
+      `Keep every existing architectural element pixel-faithful to the attached photo: the same walls and wall color, the same windows and the exact view through them, the same doors, flooring, ceiling, radiators/vents, built-ins, and the exact same camera angle, perspective and proportions. Do not move, add or remove any of these.`,
+      `Into that same empty space, add realistic, correctly scaled ${STYLES[style].prompt}.`,
+      `Arrange the pieces naturally for a ${roomLabel}. The finished room MUST be furnished — never return an empty or near-empty room.`,
+      "Match the original photo's lighting, shadows, white balance and perspective so the furniture looks genuinely present in that room.",
+      "The result must look like a professional real estate photograph of the exact same room, now professionally staged. Photorealistic. No people, no text, no watermark.",
     ].join(" ") + extraLine
   );
 }

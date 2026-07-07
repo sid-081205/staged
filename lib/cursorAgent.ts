@@ -71,7 +71,7 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
     "You are an image generation worker. Your ONLY task is a single image generation call — nothing else.",
     "Do NOT explore the repository, do NOT read files, do NOT run git or shell commands beyond what is needed to save the image.",
     "",
-    "Step 1: Call your image generation tool exactly once, giving it the attached room photo as the reference image, with this instruction:",
+    "Step 1: Call your image generation tool exactly once in image-to-image / edit mode. Use the attached room photo as the base image to edit and preserve — the output must be the SAME room from the SAME camera angle, not a newly invented room. Pass this instruction:",
     "",
     prompt,
     "",
