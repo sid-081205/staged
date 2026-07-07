@@ -46,6 +46,10 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function stagePhoto(inputPath: string, prompt: string, styleKey?: string): Promise<Buffer> {
   if (process.env.MOCK_GENERATION === "1") {
+    // Emulate real generation latency (real renders take 1–5 min) so the
+    // background-progress flow is observable locally. Tunable / zero-able.
+    const delay = Number(process.env.MOCK_DELAY_MS ?? 6000);
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     const base = sharp(inputPath).rotate();
     if (styleKey === "enhance") {
       return base.modulate({ brightness: 1.18, saturation: 1.12 }).jpeg({ quality: 92 }).toBuffer();

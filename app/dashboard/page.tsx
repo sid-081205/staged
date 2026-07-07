@@ -6,6 +6,7 @@ import { countSuccessfulRenders, getUser, grantCredits, jobPhotos, jobsForUser }
 import { getStripe } from "@/lib/stripe";
 import { FREE_PREVIEWS, PACK_CREDITS, PACK_LABEL } from "@/lib/config";
 import BuyPackButton from "./BuyPackButton";
+import ListingRow from "./ListingRow";
 
 export const metadata: Metadata = { title: "Dashboard — Staged" };
 export const dynamic = "force-dynamic";
@@ -118,36 +119,16 @@ export default async function DashboardPage({
           {jobs.map((job) => {
             const photos = jobPhotos(job.id);
             const renders = countSuccessfulRenders(job.id);
-            const first = photos[0];
             return (
-              <Link
+              <ListingRow
                 key={job.id}
-                href={`/stage?job=${job.id}`}
-                className="flex items-center gap-6 px-5 py-5 transition-colors first:rounded-t-2xl last:rounded-b-2xl hover:bg-paper-2"
-              >
-                {first ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`/api/image/${first.id}?kind=original`}
-                    alt=""
-                    className="h-20 w-28 rounded-xl border border-line object-cover"
-                  />
-                ) : (
-                  <div className="flex h-20 w-28 items-center justify-center rounded-xl border border-line text-xs text-muted">
-                    No photos
-                  </div>
-                )}
-                <div className="flex-1">
-                  <p className="font-medium">
-                    Listing · {new Date(job.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </p>
-                  <p className="mt-1 text-sm text-muted">
-                    {photos.length} photo{photos.length === 1 ? "" : "s"} · {renders} render
-                    {renders === 1 ? "" : "s"}
-                  </p>
-                </div>
-                <span className="text-sm text-muted">Open →</span>
-              </Link>
+                id={job.id}
+                name={job.name}
+                createdAt={job.created_at}
+                photoCount={photos.length}
+                renderCount={renders}
+                firstPhotoId={photos[0]?.id ?? null}
+              />
             );
           })}
         </div>

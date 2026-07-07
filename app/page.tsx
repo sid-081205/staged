@@ -2,7 +2,16 @@ import Link from "next/link";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import StyleGallery from "@/components/StyleGallery";
 import Reveal from "@/components/Reveal";
-import { FREE_PREVIEWS, PACK_CREDITS, PACK_LABEL, PER_IMAGE_LABEL, STYLES } from "@/lib/config";
+import {
+  FREE_PREVIEWS,
+  FURNITURE_STYLE_KEYS,
+  PACK_CREDITS,
+  PACK_LABEL,
+  PER_IMAGE_LABEL,
+  STYLES,
+} from "@/lib/config";
+
+const STYLE_COUNT = FURNITURE_STYLE_KEYS.length;
 
 const faq: [string, string][] = [
   [
@@ -45,7 +54,7 @@ const faq: [string, string][] = [
 
 const steps: [string, string][] = [
   ["Sign in", "Email in, 6-digit code back, you're in. No password to invent. Your images and credits live on your account."],
-  ["Upload & pick a mode", "Photos of empty rooms — up to 10 per listing. Six furniture styles, declutter to empty a room, or enhance to fix lighting. A render takes a couple of minutes."],
+  ["Upload & pick a mode", `Photos of empty rooms — up to 10 per listing. ${STYLE_COUNT} furniture styles plus declutter, enhance, day-to-dusk and renovate — and a box to add your own request. A render takes a couple of minutes.`],
   ["Download", "Full resolution, no watermark, yours outright. One click adds the MLS \"Virtually staged\" disclosure label."],
 ];
 
@@ -53,8 +62,8 @@ const comparison: [string, string, string, string][] = [
   ["Cost for 8 photos", "$8", "$128–$240", "$2,000–$6,000"],
   ["Turnaround", "Minutes", "24–48 hours", "1–2 weeks"],
   ["Revisions", `${PER_IMAGE_LABEL} per render`, "$5–$15 each", "Reshoot"],
-  ["Styles to compare", "6 per photo", "1 per order", "1"],
-  ["Empty-room declutter", "Included mode", "Extra fee", "Movers"],
+  ["Styles to compare", `${STYLE_COUNT}+ per photo`, "1 per order", "1"],
+  ["Modes included", "Stage · declutter · enhance · dusk · renovate", "Separate fees", "—"],
   ["Photo enhancement", "Included mode", "$2–$4/photo", "—"],
 ];
 
@@ -69,7 +78,6 @@ export default function Home() {
             <a href="#styles" className="hidden hover:text-ink sm:block">Styles</a>
             <a href="#pricing" className="hidden hover:text-ink sm:block">Pricing</a>
             <a href="#faq" className="hidden hover:text-ink sm:block">FAQ</a>
-            <Link href="/signin" className="hover:text-ink">Sign in</Link>
             <Link
               href="/stage"
               className="rounded-xl border border-ink bg-ink px-4 py-2 text-paper transition-colors hover:bg-transparent hover:text-ink"
@@ -99,6 +107,12 @@ export default function Home() {
               furnished minutes later. {PER_IMAGE_LABEL} per image — while
               traditional stagers charge $30 a photo and take two days.
             </p>
+            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
+              <span className="font-medium text-ink">The best AI image models, with custom knowledge of your
+              real-estate needs</span>{" "}
+              — correct furniture scale, MLS-safe architecture and true-to-photo light — so every render
+              looks like a professional listing photo, not a gimmick.
+            </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 href="/stage"
@@ -127,7 +141,7 @@ export default function Home() {
           {[
             [PER_IMAGE_LABEL, "per image, flat"],
             [`${PACK_LABEL} / ${PACK_CREDITS}`, "images per pack — credits never expire"],
-            ["3 modes", "stage, declutter, enhance"],
+            [`${STYLE_COUNT}+ looks`, "styles, plus declutter, enhance, day-to-dusk & renovate"],
             ["8 in 10", "buyers' agents say staging helps buyers visualize a home*"],
           ].map(([big, small], i) => (
             <div key={big} className={`px-4 py-8 ${i > 0 ? "border-t border-line sm:border-l sm:border-t-0" : ""}`}>
@@ -160,13 +174,14 @@ export default function Home() {
         <section id="styles" className="py-20 md:py-28">
           <Reveal>
             <div className="max-w-2xl">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">One photo, six directions</p>
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">One photo, many directions</p>
               <h2 className="mt-3 font-serif text-4xl">Match the furniture to the buyer.</h2>
               <p className="mt-4 leading-relaxed text-muted">
                 A starter condo shows better in Scandinavian. A $2M listing needs
-                the luxury treatment. Render the same room in multiple styles and
-                pick what fits — every style below is the identical photo, staged
-                by Staged.
+                the luxury treatment. Render the same room across {STYLE_COUNT}+ styles and
+                pick what fits — each backed by the best AI models tuned with real
+                estate staging know-how. Every style below is the identical photo,
+                staged by Staged.
               </p>
             </div>
           </Reveal>
