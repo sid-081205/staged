@@ -13,22 +13,22 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
   title: {
-    default: "Staged — virtual staging for real estate listings",
-    template: "%s — Staged",
+    default: "Staged | Virtual staging for real estate listings",
+    template: "%s | Staged",
   },
   description:
-    "Upload photos of empty rooms. Download them professionally furnished in about 30 seconds. $19 per listing, no subscription. Includes declutter and photo-enhancement modes.",
+    "Upload photos of empty rooms. Download them professionally furnished minutes later. $1 per image, no subscription. Stage for sale listings or Airbnb, remove furniture, or fix the lighting.",
   openGraph: {
-    title: "Staged — empty rooms don't sell",
+    title: "Staged | Empty rooms don't sell",
     description:
-      "AI virtual staging for real estate listings. $19 per listing, renders in 30 seconds, free previews.",
+      "AI virtual staging for real estate listings and Airbnbs. $1 per image, renders in minutes, free previews.",
     images: ["/demo/after.jpg"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Staged — empty rooms don't sell",
-    description: "AI virtual staging for real estate listings. $19 per listing, free previews.",
+    title: "Staged | Empty rooms don't sell",
+    description: "AI virtual staging for real estate listings and Airbnbs. $1 per image, free previews.",
     images: ["/demo/after.jpg"],
   },
 };

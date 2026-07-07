@@ -5,16 +5,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import {
   FREE_PREVIEWS,
-  FURNITURE_STYLE_KEYS,
-  isUtilityStyle,
   MAX_EXTRA_PROMPT,
   MAX_PHOTOS,
   PACK_CREDITS,
   PACK_LABEL,
+  modeLabel,
   ROOM_TYPES,
+  SERVICES,
+  STYLE_GROUPS,
   STYLES,
-  UTILITY_STYLE_KEYS,
   RoomKey,
+  ServiceKey,
   StyleKey,
 } from "@/lib/config";
 import { addTracked, removeTracked } from "@/lib/renderTracker";
@@ -170,14 +171,20 @@ export default function StageClient() {
     }
   }
 
-  async function generate(photoId: string, style: StyleKey, roomType: RoomKey, extraPrompt: string) {
+  async function generate(
+    photoId: string,
+    service: ServiceKey,
+    style: StyleKey,
+    roomType: RoomKey,
+    extraPrompt: string
+  ) {
     if (!job) return;
     setError(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoId, style, roomType, extraPrompt }),
+        body: JSON.stringify({ photoId, service, style, roomType, extraPrompt }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -221,13 +228,6 @@ export default function StageClient() {
     }
   }
 
-  function resetListing() {
-    localStorage.removeItem(JOB_KEY);
-    window.history.replaceState({}, "", "/stage");
-    setJob(null);
-    setError(null);
-  }
-
   const credits = user?.credits ?? 0;
   const freeLeft = user?.freeLeft ?? FREE_PREVIEWS;
   const outOfRenders = credits <= 0 && freeLeft <= 0;
@@ -248,34 +248,12 @@ export default function StageClient() {
                   : `${freeLeft} free preview${freeLeft === 1 ? "" : "s"} left`}
               </span>
             )}
-            <button
-              onClick={buyPack}
-              disabled={checkingOut}
-              className="hidden text-muted underline-offset-2 hover:text-ink hover:underline disabled:opacity-50 sm:block"
-            >
-              Buy {PACK_CREDITS} images — {PACK_LABEL}
-            </button>
-            {job && (
-              <button onClick={resetListing} className="text-muted underline-offset-2 hover:text-ink hover:underline">
-                New listing
-              </button>
-            )}
             <Link href="/dashboard" className="text-muted underline-offset-2 hover:text-ink hover:underline">
-              Dashboard
+              Back to dashboard
             </Link>
           </div>
         </div>
       </header>
-
-      {/* Model / expertise assurance */}
-      <div className="mt-6 rounded-2xl border border-line bg-paper-2 px-4 py-3 text-sm">
-        <span className="font-medium text-ink">The best AI models, tuned for real estate.</span>{" "}
-        <span className="text-muted">
-          Every render pairs top-tier AI image models with custom staging knowledge of how listing
-          photos should look — correct scale, MLS-safe architecture, professional light — for the most
-          professional images for your listings.
-        </span>
-      </div>
 
       {/* Purchase confirmation */}
       {justPurchased && (
@@ -283,7 +261,7 @@ export default function StageClient() {
           <p>
             <span className="font-medium text-accent">Pack added.</span>{" "}
             <span className="text-muted">
-              {PACK_CREDITS} images on your account — renders are now clean, full resolution, and downloadable.
+              {PACK_CREDITS} images on your account. Renders are now clean, full resolution, and downloadable.
             </span>
           </p>
           <span className="text-xs uppercase tracking-widest text-muted">Payment received</span>
@@ -293,8 +271,8 @@ export default function StageClient() {
       {/* Free-preview notice */}
       {!justPurchased && onFreePreviews && (
         <div className="mt-6 rounded-2xl border border-line bg-paper-2 px-4 py-3 text-sm text-muted">
-          You&rsquo;re on free previews — watermarked, {freeLeft} left. Buy {PACK_CREDITS} images for {PACK_LABEL} to
-          get clean full-resolution downloads.
+          You&rsquo;re on free previews (watermarked, {freeLeft} left). Buy {PACK_CREDITS} images for {PACK_LABEL} to
+          get clean full resolution downloads.
         </div>
       )}
 
@@ -391,7 +369,7 @@ export default function StageClient() {
       {!job && (
         <p className="mt-8 text-center text-sm text-muted">
           Every account starts with {FREE_PREVIEWS} free watermarked previews. Packs are {PACK_LABEL} for{" "}
-          {PACK_CREDITS} clean full-resolution images.
+          {PACK_CREDITS} clean full resolution images.
         </p>
       )}
 
@@ -403,12 +381,12 @@ export default function StageClient() {
               <p>
                 <span className="font-medium">You&rsquo;re out of images.</span>{" "}
                 <span className="text-muted">
-                  {PACK_LABEL} adds {PACK_CREDITS} more — clean, full resolution, any mode. Credits never expire.
+                  {PACK_LABEL} adds {PACK_CREDITS} more, clean and full resolution, for any edit. Credits never expire.
                 </span>
               </p>
               {IS_TEST_MODE && (
                 <p className="mt-1 text-xs text-accent">
-                  Test mode — pay with card 4242 4242 4242 4242, any future expiry, any CVC.
+                  Test mode: pay with card 4242 4242 4242 4242, any future expiry, any CVC.
                 </p>
               )}
             </div>
@@ -417,7 +395,7 @@ export default function StageClient() {
               disabled={checkingOut}
               className="rounded-xl border border-ink bg-ink px-6 py-3 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50"
             >
-              {checkingOut ? "Redirecting…" : `Buy ${PACK_CREDITS} images — ${PACK_LABEL}`}
+              {checkingOut ? "Redirecting…" : `Buy ${PACK_CREDITS} images for ${PACK_LABEL}`}
             </button>
           </div>
         </div>
@@ -439,8 +417,15 @@ function PhotoCard({
   disabled: boolean;
   autoReviewId: string | null;
   renders: RenderInfo[];
-  onGenerate: (photoId: string, style: StyleKey, roomType: RoomKey, extraPrompt: string) => Promise<void>;
+  onGenerate: (
+    photoId: string,
+    service: ServiceKey,
+    style: StyleKey,
+    roomType: RoomKey,
+    extraPrompt: string
+  ) => Promise<void>;
 }) {
+  const [service, setService] = useState<ServiceKey>("stage");
   const [style, setStyle] = useState<StyleKey>("modern");
   const [room, setRoom] = useState<RoomKey>("living");
   const [extra, setExtra] = useState("");
@@ -451,7 +436,7 @@ function PhotoCard({
   const processing = renders.filter((r) => r.status === "processing");
   const failed = renders.filter((r) => r.status === "failed");
   const busy = submitting || processing.length > 0;
-  const utility = isUtilityStyle(style);
+  const staging = service === "stage";
 
   // Auto-open the compare view when arriving from the progress widget's Review.
   useEffect(() => {
@@ -463,22 +448,18 @@ function PhotoCard({
   async function submit() {
     setSubmitting(true);
     try {
-      await onGenerate(photoId, style, room, extra.trim());
+      await onGenerate(photoId, service, style, room, extra.trim());
     } finally {
       setSubmitting(false);
     }
   }
 
   const buttonLabel = busy
-    ? "Working — runs in the background"
-    : style === "declutter"
+    ? "Working, runs in the background"
+    : service === "declutter"
     ? "Empty this room"
-    : style === "enhance"
+    : service === "enhance"
     ? "Enhance this photo"
-    : style === "dusk"
-    ? "Convert to dusk"
-    : style === "renovate"
-    ? "Renovate this room"
     : done.length > 0
     ? "Stage again"
     : "Stage this room";
@@ -494,26 +475,58 @@ function PhotoCard({
             className="aspect-[4/3] w-full object-cover"
           />
           <div className="space-y-3 p-4">
+            <label className="block text-sm">
+              <span className="text-muted">What do you need?</span>
+              <select
+                value={service}
+                onChange={(e) => setService(e.target.value as ServiceKey)}
+                className="mt-1 w-full cursor-pointer rounded-xl border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
+              >
+                {Object.entries(SERVICES).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-muted">{SERVICES[service].description}</span>
+            </label>
             <Select
-              label="Room"
+              label="Room type"
               value={room}
               onChange={(v) => setRoom(v as RoomKey)}
               options={Object.entries(ROOM_TYPES).map(([k, v]) => [k, v])}
             />
-            <ModeSelect value={style} onChange={setStyle} />
+            {staging && (
+              <label className="block text-sm">
+                <span className="text-muted">Furniture style</span>
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value as StyleKey)}
+                  className="mt-1 w-full cursor-pointer rounded-xl border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
+                >
+                  {STYLE_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.keys.map((k) => (
+                        <option key={k} value={k}>
+                          {STYLES[k].label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="block text-sm">
-              <span className="text-muted">
-                {utility ? "Anything specific?" : "Add a request (optional)"}
-              </span>
+              <span className="text-muted">Anything specific? (optional)</span>
               <textarea
                 value={extra}
                 maxLength={MAX_EXTRA_PROMPT}
                 onChange={(e) => setExtra(e.target.value)}
                 rows={2}
                 placeholder={
-                  utility
-                    ? "e.g. keep the curtains, warmer evening light"
-                    : "e.g. add a reading nook, warmer tones, a large plant"
+                  staging
+                    ? "e.g. add a grand piano, warmer tones, a large plant"
+                    : "e.g. keep the curtains, brighter evening light"
                 }
                 className="mt-1 w-full resize-y rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none placeholder:text-muted/60 focus:border-ink"
               />
@@ -529,7 +542,7 @@ function PhotoCard({
               {buttonLabel}
             </button>
             {disabled && !busy && (
-              <p className="text-xs text-muted">Out of images — buy a pack below to continue.</p>
+              <p className="text-xs text-muted">Out of images. Buy a pack below to continue.</p>
             )}
           </div>
         </div>
@@ -538,7 +551,7 @@ function PhotoCard({
           {done.length === 0 && processing.length === 0 && failed.length === 0 && (
             <div className="flex h-full min-h-40 flex-col items-center justify-center gap-1 text-center text-sm text-muted">
               <p>Renders appear here.</p>
-              <p className="text-xs">Pick a mode and hit the button — compare results side by side after.</p>
+              <p className="text-xs">Pick an edit, hit the button, then compare results side by side.</p>
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -557,8 +570,7 @@ function PhotoCard({
                 </button>
                 <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                   <span className="truncate text-muted">
-                    {STYLES[r.style as StyleKey]?.label.split(" —")[0].split(" (")[0] ?? r.style} ·{" "}
-                    {ROOM_TYPES[r.roomType as RoomKey] ?? r.roomType}
+                    {modeLabel(r.style)} · {ROOM_TYPES[r.roomType as RoomKey] ?? r.roomType}
                   </span>
                   {r.paid ? (
                     <a
@@ -579,14 +591,14 @@ function PhotoCard({
                   <span className="text-sm text-muted">Furnishing…</span>
                 </div>
                 <div className="px-3 py-2 text-xs text-muted">
-                  {STYLES[r.style as StyleKey]?.label.split(" —")[0].split(" (")[0] ?? r.style} · runs in background
+                  {modeLabel(r.style)} · runs in background
                 </div>
               </div>
             ))}
             {failed.map((r) => (
               <div key={r.id} className="overflow-hidden rounded-2xl border border-line bg-paper-2 p-3 text-sm">
                 <p className="font-medium">Render failed</p>
-                <p className="mt-1 text-xs text-muted">{r.error ?? "Try again — you weren't charged."}</p>
+                <p className="mt-1 text-xs text-muted">{r.error ?? "Try again. You weren't charged."}</p>
               </div>
             ))}
           </div>
@@ -602,9 +614,7 @@ function PhotoCard({
           <div className="w-full max-w-3xl rounded-3xl border border-ink bg-paper p-4" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm">
-                <span className="font-medium">
-                  {STYLES[compare.style as StyleKey]?.label.split(" —")[0].split(" (")[0] ?? compare.style}
-                </span>{" "}
+                <span className="font-medium">{modeLabel(compare.style)}</span>{" "}
                 <span className="text-muted">· drag the divider</span>
               </p>
               <button onClick={() => setCompare(null)} className="text-muted hover:text-ink">
@@ -621,34 +631,6 @@ function PhotoCard({
         </div>
       )}
     </section>
-  );
-}
-
-function ModeSelect({ value, onChange }: { value: StyleKey; onChange: (v: StyleKey) => void }) {
-  return (
-    <label className="block text-sm">
-      <span className="text-muted">Mode</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as StyleKey)}
-        className="mt-1 w-full cursor-pointer rounded-xl border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
-      >
-        <optgroup label="Furniture styles (virtual staging)">
-          {FURNITURE_STYLE_KEYS.map((k) => (
-            <option key={k} value={k}>
-              {STYLES[k].label}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label="Photo edits">
-          {UTILITY_STYLE_KEYS.map((k) => (
-            <option key={k} value={k}>
-              {STYLES[k].label}
-            </option>
-          ))}
-        </optgroup>
-      </select>
-    </label>
   );
 }
 

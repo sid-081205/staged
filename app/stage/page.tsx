@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/auth";
 import StageClient from "./StageClient";
 
 export const metadata: Metadata = {
-  title: "Stage a listing — Staged",
+  title: "Stage a listing",
 };
 
 export const dynamic = "force-dynamic";

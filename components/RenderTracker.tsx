@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ROOM_TYPES, STYLES, RoomKey, StyleKey } from "@/lib/config";
+import { modeLabel, ROOM_TYPES, RoomKey } from "@/lib/config";
 import {
   getTracked,
   removeTracked,
@@ -10,9 +10,6 @@ import {
   updateTracked,
 } from "@/lib/renderTracker";
 
-function styleLabel(k: string) {
-  return STYLES[k as StyleKey]?.label.split(" —")[0].split(" (")[0] ?? k;
-}
 function roomLabel(k: string) {
   return ROOM_TYPES[k as RoomKey] ?? k;
 }
@@ -94,11 +91,11 @@ export default function RenderTracker() {
                 )}
                 {item.status === "failed" && <p className="font-medium">Render failed</p>}
                 <p className="mt-0.5 truncate text-muted">
-                  {roomLabel(item.roomType)} · {styleLabel(item.style)}
+                  {roomLabel(item.roomType)} · {modeLabel(item.style)}
                 </p>
                 {item.status === "processing" && (
                   <p className="mt-0.5 text-xs text-muted">
-                    Keep browsing — we&rsquo;ll keep working in the background.
+                    Keep browsing. We&rsquo;ll keep working in the background.
                   </p>
                 )}
                 {item.status === "failed" && item.error && (

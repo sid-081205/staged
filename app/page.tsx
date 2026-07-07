@@ -4,47 +4,49 @@ import StyleGallery from "@/components/StyleGallery";
 import Reveal from "@/components/Reveal";
 import {
   FREE_PREVIEWS,
-  FURNITURE_STYLE_KEYS,
+  FURNITURE_STYLE_COUNT,
   PACK_CREDITS,
   PACK_LABEL,
   PER_IMAGE_LABEL,
   STYLES,
 } from "@/lib/config";
 
-const STYLE_COUNT = FURNITURE_STYLE_KEYS.length;
-
 const faq: [string, string][] = [
   [
     "How does pricing work?",
-    `${PACK_LABEL} buys ${PACK_CREDITS} images — that's ${PER_IMAGE_LABEL} per image, any mode. Packs stack and credits never expire. Every new account also gets ${FREE_PREVIEWS} free watermarked previews to try it first.`,
+    `${PACK_LABEL} buys ${PACK_CREDITS} images, which works out to ${PER_IMAGE_LABEL} per image for any edit. Packs stack and credits never expire. Every new account also gets ${FREE_PREVIEWS} free watermarked previews to try it first.`,
   ],
   [
     "Do I need an account?",
-    "Yes — sign in with just your email (we send a 6-digit code, no password) so your images and credits stay in one place. It takes about 20 seconds.",
+    "Yes. Sign in with just your email (we send a 6 digit code, no password) so your images and credits stay in one place. It takes about 20 seconds.",
+  ],
+  [
+    "Can I stage for Airbnb as well as sale listings?",
+    "Yes. The furniture styles are grouped by situation: styles for sale listings, styles for Airbnb and short term rentals, and commercial spaces. Pick the one that matches how the property will be marketed.",
   ],
   [
     "Is virtual staging allowed on the MLS?",
-    "Yes. Most MLSs allow it and require disclosure. Every download has an optional \"Virtually staged\" label you can toggle on to stay compliant. Check your local MLS rules — some also want the empty original alongside.",
+    "Yes. Most MLSs allow it and require disclosure. Every download has an optional \"Virtually staged\" label you can toggle on to stay compliant. Check your local MLS rules, since some also want the empty original alongside.",
   ],
   [
     "What photos work best?",
-    "A straight-on, well-lit photo of the whole room, shot from a corner or doorway at chest height. Phone photos are fine. Blurry or very dark photos produce worse furniture.",
+    "A straight on, well lit photo of the whole room, shot from a corner or doorway at chest height. Phone photos are fine, including iPhone HEIC files. Blurry or very dark photos produce worse furniture.",
   ],
   [
     "Can it remove existing furniture?",
-    "Yes. Pick \"Declutter\" as the mode and it empties the room instead of furnishing it. For occupied listings: declutter first, then stage the empty result.",
+    "Yes. Pick \"Remove furniture and clutter\" and it empties the room instead of furnishing it. For occupied listings: declutter first, then stage the empty result.",
   ],
   [
     "Can it just fix my photos without adding furniture?",
-    "Yes — Enhance mode. It corrects exposure and white balance, brightens dark rooms, recovers blown-out windows and blue-skies the view, without touching a single object. Photo editors charge $2–4 per photo for exactly this.",
+    "Yes. Pick \"Fix lighting and sky\". It corrects exposure and white balance, brightens dark rooms, recovers washed out windows and cleans up the sky, without touching a single object. Photo editors charge $2 to $4 per photo for exactly this.",
   ],
   [
     "Does it change the room itself?",
-    "No. Walls, windows, floors, and fixtures stay as photographed. Only furniture and decor are added. If a render alters the architecture, regenerate it — each render is one image credit.",
+    "No. Walls, windows, floors, and fixtures stay as photographed. Only furniture and decor are added. Every render is checked against your original photo before it is delivered, and if one still alters the architecture, regenerate it.",
   ],
   [
     "Who owns the images?",
-    "You do. Use them on the MLS, Zillow, brochures, social — anywhere. No attribution, no extra license fees.",
+    "You do. Use them on the MLS, Zillow, Airbnb, brochures, social, anywhere. No attribution, no extra license fees.",
   ],
   [
     "What if the renders are unusable?",
@@ -53,8 +55,8 @@ const faq: [string, string][] = [
 ];
 
 const steps: [string, string][] = [
-  ["Sign in", "Email in, 6-digit code back, you're in. No password to invent. Your images and credits live on your account."],
-  ["Upload & pick a mode", `Photos of empty rooms — up to 10 per listing. ${STYLE_COUNT} furniture styles plus declutter, enhance, day-to-dusk and renovate — and a box to add your own request. A render takes a couple of minutes.`],
+  ["Sign in", "Email in, 6 digit code back, you're in. No password to invent. Your images and credits live on your account."],
+  ["Upload and choose an edit", `Up to 10 photos per listing. Pick what you need: stage with furniture (${FURNITURE_STYLE_COUNT} styles for sale listings and Airbnbs), remove furniture and clutter, or fix the lighting. There is also a box for specific requests. A render takes a few minutes.`],
   ["Download", "Full resolution, no watermark, yours outright. One click adds the MLS \"Virtually staged\" disclosure label."],
 ];
 
@@ -70,9 +72,9 @@ const offerings: {
 }[] = [
   {
     id: "staging",
-    tag: "Virtual staging",
+    tag: "Stage with furniture",
     title: "Furnish empty rooms.",
-    body: "Upload a bare room and get it back professionally furnished in minutes, in any of 16 styles. Walls, windows, floors and the camera angle stay exactly as photographed — only furniture and decor are added. It's the highest-impact edit an agent can make: staged listings pull far more buyer attention than empty ones.",
+    body: `Upload a bare room and get it back professionally furnished in minutes, in any of ${FURNITURE_STYLE_COUNT} styles grouped by situation: selling on the MLS, hosting on Airbnb, or presenting a commercial space. Walls, windows, floors and the camera angle stay exactly as photographed. Only furniture and decor are added.`,
     before: "/demo/before.jpg",
     after: "/demo/stage-after.jpg",
     beforeLabel: "Empty",
@@ -80,9 +82,9 @@ const offerings: {
   },
   {
     id: "declutter",
-    tag: "Declutter & item removal",
+    tag: "Remove furniture and clutter",
     title: "Clear out the clutter.",
-    body: "Occupied home full of the seller's furniture, boxes and personal items? Strip it back to a clean, empty room — the floors and walls behind removed objects are reconstructed. It's the essential first step for lived-in listings, before you restage them.",
+    body: "Occupied home full of the seller's furniture, boxes and personal items? Strip it back to a clean, empty room. The floors and walls behind removed objects are reconstructed. It is the essential first step for lived in listings, before you restage them.",
     before: "/demo/bed-after.jpg",
     after: "/demo/bed-before.jpg",
     beforeLabel: "Cluttered",
@@ -90,9 +92,9 @@ const offerings: {
   },
   {
     id: "enhance",
-    tag: "Photo enhancement",
+    tag: "Fix lighting and sky",
     title: "Fix the light and sky.",
-    body: "Correct exposure and white balance, lift dark rooms, recover blown-out windows and drop in a clean blue sky — without moving a single object in the room. It's the low-cost edit nearly every listing photo needs, plus day-to-dusk twilight conversion for a standout hero shot.",
+    body: "Correct exposure and white balance, lift dark rooms, recover washed out windows and drop in a clean blue sky, without moving a single object in the room. It is the low cost edit nearly every listing photo needs.",
     before: "/demo/before.jpg",
     after: "/demo/enhance-after.jpg",
     beforeLabel: "As shot",
@@ -101,12 +103,12 @@ const offerings: {
 ];
 
 const comparison: [string, string, string, string][] = [
-  ["Cost for 8 photos", "$8", "$128–$240", "$2,000–$6,000"],
-  ["Turnaround", "Minutes", "24–48 hours", "1–2 weeks"],
-  ["Revisions", `${PER_IMAGE_LABEL} per render`, "$5–$15 each", "Reshoot"],
-  ["Styles to compare", `${STYLE_COUNT}+ per photo`, "1 per order", "1"],
-  ["Modes included", "Stage · declutter · enhance · dusk · renovate", "Separate fees", "—"],
-  ["Photo enhancement", "Included mode", "$2–$4/photo", "—"],
+  ["Cost for 8 photos", "$8", "$128 to $240", "$2,000 to $6,000"],
+  ["Turnaround", "Minutes", "24 to 48 hours", "1 to 2 weeks"],
+  ["Revisions", `${PER_IMAGE_LABEL} per render`, "$5 to $15 each", "Reshoot"],
+  ["Styles to compare", `${FURNITURE_STYLE_COUNT} per photo`, "1 per order", "1"],
+  ["Furniture removal", "Included", "Extra fee", "Movers"],
+  ["Photo enhancement", "Included", "$2 to $4 per photo", "Not offered"],
 ];
 
 export default function Home() {
@@ -147,34 +149,30 @@ export default function Home() {
             </h1>
             <p className="mt-6 max-w-md text-lg leading-relaxed text-muted">
               Upload a photo of an empty room. Download it professionally
-              furnished minutes later. {PER_IMAGE_LABEL} per image — while
-              traditional stagers charge $30 a photo and take two days.
-            </p>
-            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
-              <span className="font-medium text-ink">The best AI image models, with custom knowledge of your
-              real-estate needs</span>{" "}
-              — correct furniture scale, MLS-safe architecture and true-to-photo light — so every render
-              looks like a professional listing photo, not a gimmick.
+              furnished minutes later. We use the best image models with custom
+              knowledge of your real estate needs (correct furniture scale, MLS
+              safe architecture and true to photo light) so every render looks
+              like a professional listing photo.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 href="/stage"
                 className="rounded-xl border border-ink bg-ink px-6 py-3.5 text-paper transition-colors hover:bg-transparent hover:text-ink"
               >
-                Start staging — {FREE_PREVIEWS} previews free
+                Start staging with {FREE_PREVIEWS} free previews
               </Link>
               <a href="#styles" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
                 See the styles ↓
               </a>
             </div>
             <p className="mt-4 text-sm text-muted">
-              Sign in with your email — no password, no card, no subscription.
+              Sign in with your email. No password, no card, no subscription.
             </p>
           </Reveal>
           <Reveal delay={150}>
             <BeforeAfterSlider before="/demo/before.jpg" after="/demo/after.jpg" autoplay />
             <p className="mt-2 text-center text-xs uppercase tracking-widest text-muted">
-              Drag the divider — real render, same photo
+              Drag the divider. Real render, same photo
             </p>
           </Reveal>
         </section>
@@ -183,8 +181,8 @@ export default function Home() {
         <section className="grid overflow-hidden rounded-2xl border border-line text-center sm:grid-cols-4">
           {[
             [PER_IMAGE_LABEL, "per image, flat"],
-            [`${PACK_LABEL} / ${PACK_CREDITS}`, "images per pack — credits never expire"],
-            [`${STYLE_COUNT}+ looks`, "styles, plus declutter, enhance, day-to-dusk & renovate"],
+            [`${PACK_LABEL} / ${PACK_CREDITS}`, "images per pack, credits never expire"],
+            ["3 edits", "stage, remove clutter, fix lighting"],
             ["8 in 10", "buyers' agents say staging helps buyers visualize a home*"],
           ].map(([big, small], i) => (
             <div key={big} className={`px-4 py-8 ${i > 0 ? "border-t border-line sm:border-l sm:border-t-0" : ""}`}>
@@ -203,7 +201,7 @@ export default function Home() {
             <div key={n} className="flex shrink-0 items-center">
               {Object.values(STYLES).map((s) => (
                 <span key={`${n}-${s.label}`} className="flex items-center whitespace-nowrap px-6 text-sm uppercase tracking-[0.25em] text-muted">
-                  {s.label.split(" (")[0]}
+                  {s.label}
                   <span className="ml-12 text-accent">·</span>
                 </span>
               ))}
@@ -218,12 +216,12 @@ export default function Home() {
           <Reveal>
             <div className="max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">What Staged does</p>
-              <h2 className="mt-3 font-serif text-4xl">Three edits that make a listing sell.</h2>
+              <h2 className="mt-3 font-serif text-4xl">Stage it. Clear it. Fix the light.</h2>
               <p className="mt-4 leading-relaxed text-muted">
-                The jobs agents pay photo editors for most — staging, decluttering and
-                enhancement — each powered by the best AI image models tuned with real-estate
-                staging know-how. Drag any divider below: it&rsquo;s the same room, same angle,
-                professionally transformed.
+                Three edits, one tool. Furnish empty rooms for a sale listing or an
+                Airbnb, remove furniture and clutter from occupied homes, or fix the
+                lighting on photos that came out dark. Drag any divider below to
+                compare: same room, same angle.
               </p>
             </div>
           </Reveal>
@@ -258,10 +256,10 @@ export default function Home() {
               <h2 className="mt-3 font-serif text-4xl">Match the furniture to the buyer.</h2>
               <p className="mt-4 leading-relaxed text-muted">
                 A starter condo shows better in Scandinavian. A $2M listing needs
-                the luxury treatment. Render the same room across {STYLE_COUNT}+ styles and
-                pick what fits — each backed by the best AI models tuned with real
-                estate staging know-how. Every style below is the identical photo,
-                staged by Staged.
+                the luxury treatment. An Airbnb needs to look warm and guest ready.
+                Render the same room across {FURNITURE_STYLE_COUNT} styles and pick
+                what fits. Every style below is the identical photo, staged by
+                Staged.
               </p>
             </div>
           </Reveal>
@@ -274,7 +272,7 @@ export default function Home() {
         <section className="border-t border-line py-20 md:py-28">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Three steps</p>
-            <h2 className="mt-3 font-serif text-4xl">Listing-ready before your coffee cools.</h2>
+            <h2 className="mt-3 font-serif text-4xl">Listing ready before your coffee cools.</h2>
           </Reveal>
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             {steps.map(([title, body], i) => (
@@ -319,7 +317,7 @@ export default function Home() {
               </table>
             </div>
             <p className="mt-3 text-xs text-muted">
-              Typical published rates: human virtual staging $16–$30/photo (BoxBrownie, Styldod); physical staging $2,000–$6,000 per property.
+              Typical published rates: human virtual staging $16 to $30 per photo (BoxBrownie, Styldod); physical staging $2,000 to $6,000 per property.
             </p>
           </Reveal>
         </section>
@@ -335,8 +333,8 @@ export default function Home() {
               <p className="mt-4 max-w-md leading-relaxed text-muted">
                 Stagers price per photo because their labor scales per photo. Ours
                 doesn&rsquo;t, so you shouldn&rsquo;t pay like it does. Buy images
-                {" "}{PACK_CREDITS} at a time, spend them on any mode, any listing,
-                whenever — they never expire.
+                {" "}{PACK_CREDITS} at a time and spend them on any edit, any listing,
+                whenever. They never expire.
               </p>
               <p className="mt-4 max-w-md leading-relaxed text-muted">
                 On a typical 3% commission, a whole pack pays for itself if it
@@ -352,16 +350,16 @@ export default function Home() {
                 </div>
                 <ul className="mt-6 space-y-2.5 text-[15px]">
                   {[
-                    `${PER_IMAGE_LABEL} per image — stage, declutter, or enhance`,
-                    "Full-resolution downloads, no watermark",
+                    `${PER_IMAGE_LABEL} per image: stage, remove clutter, or fix lighting`,
+                    "Full resolution downloads, no watermark",
                     "Credits never expire, packs stack",
                     "Up to 10 photos per listing, unlimited listings",
                     "Optional \"Virtually staged\" MLS label",
-                    "Full commercial rights — MLS, Zillow, print",
-                    "7-day refund if the renders don't work for you",
+                    "Full commercial rights: MLS, Zillow, Airbnb, print",
+                    "7 day refund if the renders don't work for you",
                   ].map((line) => (
                     <li key={line} className="flex gap-3">
-                      <span className="text-accent">—</span>
+                      <span className="text-accent">·</span>
                       {line}
                     </li>
                   ))}
@@ -424,7 +422,7 @@ export default function Home() {
               href="/stage"
               className="mt-10 inline-block rounded-2xl border border-ink bg-ink px-8 py-4 text-lg text-paper transition-colors hover:bg-transparent hover:text-ink"
             >
-              Start staging — {FREE_PREVIEWS} previews free
+              Start staging with {FREE_PREVIEWS} free previews
             </Link>
           </Reveal>
         </section>
@@ -437,8 +435,8 @@ export default function Home() {
             <div>
               <span className="font-serif text-3xl">Staged.</span>
               <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
-                Virtual staging for real estate listings. Upload empty rooms,
-                download furnished ones.
+                Virtual staging for real estate listings and Airbnbs. Upload empty
+                rooms, download furnished ones.
               </p>
             </div>
             <div className="flex gap-16 text-sm">

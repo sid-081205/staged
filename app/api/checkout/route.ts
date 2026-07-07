@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
           currency: "usd",
           unit_amount: PACK_PRICE_CENTS,
           product_data: {
-            name: `Staged — ${PACK_CREDITS} images`,
-            description: "Full-resolution renders, no watermark, any mode. Credits never expire.",
+            name: `Staged: ${PACK_CREDITS} images`,
+            description: "Full resolution renders, no watermark, any edit. Credits never expire.",
           },
         },
       },

@@ -18,7 +18,9 @@ const REPO = process.env.CURSOR_REPO || "https://github.com/sid-081205/images";
 const MODEL = process.env.CURSOR_MODEL || "composer-2.5";
 
 const POLL_INTERVAL_MS = 5_000;
-const TIMEOUT_MS = 5 * 60_000;
+// Generous: the agent may need a second generation attempt if the first one
+// altered the room's architecture.
+const TIMEOUT_MS = 8 * 60_000;
 
 function authHeader(): string {
   const key = process.env.CURSOR_API_KEY;
@@ -68,15 +70,18 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
     .toBuffer();
 
   const agentPrompt = [
-    "You are an image generation worker. Your ONLY task is a single image generation call — nothing else.",
-    "Do NOT explore the repository, do NOT read files, do NOT run git or shell commands beyond what is needed to save the image.",
+    "You are an image editing worker for a real estate photo service. Your ONLY task is to produce one edited image from the attached room photo. Do NOT explore the repository, do NOT read files, do NOT run git commands.",
     "",
-    "Step 1: Call your image generation tool exactly once in image-to-image / edit mode. Use the attached room photo as the base image to edit and preserve — the output must be the SAME room from the SAME camera angle, not a newly invented room. Pass this instruction:",
+    "Step 1: Look at the attached room photo carefully and note its fixed features: camera angle, each window (frame style, number of panes, the view through it), doors, radiators, wall colors, flooring, ceiling and light fixtures. These must all survive the edit unchanged.",
+    "",
+    "Step 2: Call your image generation tool in image-to-image / edit mode. You MUST pass the attached room photo as the reference image (use its file path in the tool's reference image parameter). Give the tool this instruction:",
     "",
     prompt,
     "",
-    "Step 2: Make sure the generated file exists inside the artifacts directory at the workspace root (any filename ending in .png or .jpg).",
-    "Step 3: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR, do not verify anything else.",
+    "Step 3: VERIFY before delivering. Open the generated image and compare it against the original photo. It passes only if the camera angle, windows (same frames, same panes, same view), walls, doors, radiators, flooring and ceiling are the same as the original. If anything structural changed, or a specifically requested item is missing or wrong, DO NOT deliver it: generate again (repeating that the output must be a faithful edit of the reference photo and correcting what went wrong). At most 2 generation attempts; deliver the more faithful result.",
+    "",
+    "Step 4: Save ONLY the final approved image into the artifacts directory at the workspace root (a filename ending in .png or .jpg). Never place a rejected image in artifacts. Keep rejected attempts outside the artifacts directory.",
+    "Step 5: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR.",
   ].join("\n");
 
   const created = await api<{ agent: { id: string }; run: { id: string } }>("/v1/agents", {

@@ -74,7 +74,7 @@ export default function SignInClient() {
         <h1 className="font-serif text-4xl">Sign in</h1>
         <p className="mt-3 leading-relaxed text-muted">
           {step === "email"
-            ? "Enter your email and we'll send a 6-digit code. No passwords — your images and credits stay on your account."
+            ? "Enter your email and we'll send a 6 digit code. No passwords. Your images and credits stay on your account."
             : `We emailed a 6-digit code to ${email}. It expires in 10 minutes.`}
         </p>
 
@@ -121,7 +121,7 @@ export default function SignInClient() {
             </button>
             {devCode && (
               <p className="rounded-xl border border-line bg-paper-2 px-4 py-3 text-sm text-muted">
-                Dev mode (no email key set) — your code is <span className="font-medium text-ink">{devCode}</span>
+                Dev mode (no email key set). Your code is <span className="font-medium text-ink">{devCode}</span>
               </p>
             )}
             <div className="flex items-center justify-between text-sm text-muted">

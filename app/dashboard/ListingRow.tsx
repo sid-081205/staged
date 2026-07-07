@@ -97,7 +97,7 @@ export default function ListingRow({
                   setValue(name ?? "");
                 }
               }}
-              placeholder="e.g. 12 Oak St — unit 4"
+              placeholder="e.g. 12 Oak St unit 4"
               className="w-full max-w-xs rounded-lg border border-line bg-paper px-3 py-1.5 text-sm outline-none focus:border-ink"
             />
             <button

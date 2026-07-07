@@ -8,7 +8,7 @@ import { FREE_PREVIEWS, PACK_CREDITS, PACK_LABEL } from "@/lib/config";
 import BuyPackButton from "./BuyPackButton";
 import ListingRow from "./ListingRow";
 
-export const metadata: Metadata = { title: "Dashboard — Staged" };
+export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage({
@@ -70,7 +70,7 @@ export default async function DashboardPage({
         <div className="rounded-2xl border border-line p-6">
           <p className="text-xs uppercase tracking-widest text-muted">Images left</p>
           <p className="mt-1 font-serif text-4xl">{user.credits}</p>
-          <p className="mt-1 text-sm text-muted">Clean, full resolution, any mode.</p>
+          <p className="mt-1 text-sm text-muted">Clean, full resolution, any edit.</p>
         </div>
         <div className="rounded-2xl border border-line p-6">
           <p className="text-xs uppercase tracking-widest text-muted">Free previews left</p>
@@ -105,7 +105,7 @@ export default async function DashboardPage({
         <div className="rounded-3xl border border-dashed border-line p-16 text-center">
           <p className="font-serif text-2xl">Nothing here yet.</p>
           <p className="mt-2 text-muted">
-            Stage your first listing — your first {FREE_PREVIEWS} previews are free.
+            Stage your first listing. Your first {FREE_PREVIEWS} previews are free.
           </p>
           <Link
             href="/stage"

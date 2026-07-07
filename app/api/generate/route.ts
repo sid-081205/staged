@@ -6,9 +6,11 @@ import { db, getJob, getPhoto, OUTPUTS_DIR } from "@/lib/db";
 import {
   buildPrompt,
   FREE_PREVIEWS,
+  isService,
+  isStyle,
   ROOM_TYPES,
-  STYLES,
   RoomKey,
+  ServiceKey,
   StyleKey,
   sanitizeExtraPrompt,
 } from "@/lib/config";
@@ -16,10 +18,13 @@ import { stagePhoto } from "@/lib/cursorAgent";
 import { currentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 600;
 
 /**
- * POST /api/generate  { photoId, style, roomType, extraPrompt? }
+ * POST /api/generate  { photoId, service, style?, roomType, extraPrompt? }
+ *
+ * `service` is one of stage | declutter | enhance; `style` is required when
+ * the service is stage.
  *
  * Requires sign-in. Reserves 1 credit (or 1 free preview) up front, records the
  * render as `processing`, then runs the render in the background and returns
@@ -35,13 +40,25 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const photoId = body?.photoId as string | undefined;
-  const style = body?.style as StyleKey | undefined;
+  const service = body?.service as ServiceKey | undefined;
+  const styleRaw = body?.style as string | undefined;
   const roomType = body?.roomType as RoomKey | undefined;
   const extraPrompt = sanitizeExtraPrompt(body?.extraPrompt as string | undefined);
 
-  if (!photoId || !style || !roomType || !(style in STYLES) || !(roomType in ROOM_TYPES)) {
-    return NextResponse.json({ error: "photoId, style and roomType are required." }, { status: 400 });
+  if (!photoId || !service || !roomType || !isService(service) || !(roomType in ROOM_TYPES)) {
+    return NextResponse.json({ error: "photoId, service and roomType are required." }, { status: 400 });
   }
+  let style: StyleKey | null = null;
+  if (service === "stage") {
+    if (!styleRaw || !isStyle(styleRaw)) {
+      return NextResponse.json({ error: "Pick a furniture style to stage this room." }, { status: 400 });
+    }
+    style = styleRaw;
+  }
+
+  // Renders store the furniture style for staging, or the service name for
+  // declutter / enhance, in the existing `style` column.
+  const styleColumn = service === "stage" ? (style as string) : service;
 
   const photo = getPhoto(photoId);
   if (!photo) return NextResponse.json({ error: "Unknown photo." }, { status: 404 });
@@ -75,7 +92,7 @@ export async function POST(req: NextRequest) {
   const paid = reservedCredit ? 1 : 0;
   db.prepare(
     "INSERT INTO renders (id, job_id, photo_id, style, room_type, status, paid, created_at) VALUES (?, ?, ?, ?, ?, 'processing', ?, ?)"
-  ).run(renderId, job.id, photoId, style, roomType, paid, Date.now());
+  ).run(renderId, job.id, photoId, styleColumn, roomType, paid, Date.now());
 
   // Fire-and-forget: the render keeps running on the server after we respond.
   // (Staged is designed to run on a persistent box, not a serverless function.)
@@ -84,15 +101,15 @@ export async function POST(req: NextRequest) {
     userId: user.id,
     reservedCredit,
     inputPath: photo.original_path,
-    prompt: buildPrompt(style, roomType, extraPrompt),
-    style,
+    prompt: buildPrompt(service, style, roomType, extraPrompt),
+    tag: styleColumn,
   });
 
   return NextResponse.json({
     id: renderId,
     jobId: job.id,
     photoId,
-    style,
+    style: styleColumn,
     roomType,
     status: "processing",
     paid: reservedCredit,
@@ -105,11 +122,11 @@ async function runRender(args: {
   reservedCredit: boolean;
   inputPath: string;
   prompt: string;
-  style: StyleKey;
+  tag: string;
 }) {
-  const { renderId, userId, reservedCredit, inputPath, prompt, style } = args;
+  const { renderId, userId, reservedCredit, inputPath, prompt, tag } = args;
   try {
-    const output = await stagePhoto(inputPath, prompt, style);
+    const output = await stagePhoto(inputPath, prompt, tag);
     const outputPath = path.join(OUTPUTS_DIR, `${renderId}.jpg`);
     fs.writeFileSync(outputPath, output);
     db.prepare("UPDATE renders SET status = 'done', output_path = ? WHERE id = ?").run(

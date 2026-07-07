@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
+    "heic-convert": "^2.1.0",
     "nanoid": "^5.1.6",
     "next": "^16.2.10",
     "react": "^19.2.7",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.3",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/heic-convert": "^2.1.1",
     "@types/node": "^25.5.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
