@@ -19,6 +19,13 @@ Virtual staging for real estate listings (Next.js 16 App Router + SQLite). See
   - Set `MOCK_GENERATION=1` to fake renders (a tinted copy via `sharp`, no
     Cursor API key or credits used). Without it, `/api/generate` calls the
     Cursor Cloud Agents API and needs a valid `CURSOR_API_KEY` + `CURSOR_REPO`.
+    NOTE: mock mode **ignores the prompt and style entirely** (it only applies a
+    fixed tint), so you cannot judge real generation quality in mock mode —
+    every style/prompt yields the same tinted image. Real renders take ~2 min
+    and the `CURSOR_REPO` must exist, be non-empty, and be connected to Cursor's
+    GitHub app. Faithful staging depends on the prompt forcing an in-place image
+    edit (see `buildPrompt` in `lib/config.ts`); a weak prompt makes the model
+    invent a different/empty room.
   - Stripe checkout (`/api/checkout`) needs `STRIPE_SECRET_KEY` /
     `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`; without them `lib/stripe.ts`
     `getStripe()` returns null and buying credit packs is unavailable. Every
