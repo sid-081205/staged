@@ -83,7 +83,7 @@ export default function RenderTracker() {
                 {item.status === "processing" && (
                   <p className="flex items-center gap-2 font-medium">
                     <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-line border-t-ink" />
-                    Furnishing…
+                    Working on your image…
                   </p>
                 )}
                 {item.status === "done" && (

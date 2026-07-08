@@ -35,8 +35,9 @@ Virtual staging for real estate listings (Next.js 16 App Router + SQLite). See
   removed in Next.js 16 (it now mis-parses `lint` as a directory and fails).
   There is no ESLint config in the repo. Use `npx tsc --noEmit` as the static
   check instead.
-- **Renders are slow with a real Cursor key** (1–5 min per image); `maxDuration`
-  on `/api/generate` is 300s. With `MOCK_GENERATION=1`, `MOCK_DELAY_MS` (default
+- **Renders are slow with a real Cursor key** (1–8 min per image; the render
+  agent verifies its output against the original photo and may retry once);
+  `maxDuration` on `/api/generate` is 600s. With `MOCK_GENERATION=1`, `MOCK_DELAY_MS` (default
   6000) simulates that latency so the background-progress UI is visible; set it
   to `0` for instant mock renders.
 - **Renders run as fire-and-forget background work.** `/api/generate` reserves a

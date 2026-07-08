@@ -15,10 +15,13 @@ one cheap box.
   Uploading and rendering require an account, so every render is attributable
   to a user.
 - **Staging workspace** (`/stage`) — upload up to 10 photos per listing (or
-  one-click try the built-in sample room), pick a room type and a mode:
-  six furniture styles, **Declutter** (removes furniture), or **Enhance**
-  (fixes exposure/white balance/sky without touching contents). A render takes
-  1–3 minutes, with a before/after compare modal on every result.
+  one-click try the built-in sample room), then pick from three dropdowns:
+  what to do (**Stage with furniture**, **Remove furniture and clutter**, or
+  **Fix lighting and sky**), the room type, and — for staging — a furniture
+  style grouped by situation (sale listings, Airbnb / short-term rentals,
+  commercial). An optional free-text box takes specific requests ("add a grand
+  piano"). A render takes a few minutes, with a before/after compare modal on
+  every result.
 - **Credits** — $5 = 5 images. 1 credit = 1 render (regenerations included),
   spendable on any mode, any listing. Packs stack, credits never expire.
   Credit renders are clean and downloadable at full resolution; the 2 free
@@ -35,8 +38,10 @@ Each render spins up a Cursor cloud agent (`lib/cursorAgent.ts`):
 1. `POST /v1/agents` with the staging prompt + the room photo attached, on the
    repo in `CURSOR_REPO`, using the model in `CURSOR_MODEL` (default
    `composer-2.5`).
-2. The agent uses its image-generation tool and saves the result into its
-   `artifacts/` directory (it does not commit anything to the repo).
+2. The agent studies the photo, calls its image-generation tool with the photo
+   as the reference image, then compares the output against the original and
+   retries once if the architecture changed. Only the approved image is saved
+   into its `artifacts/` directory (it does not commit anything to the repo).
 3. The app polls the run, lists artifacts when it finishes, downloads the
    image via a presigned URL, and archives the agent.
 
@@ -53,7 +58,8 @@ Requirements: a Cursor API key, and a GitHub repo (default
    anyone)
 4. Click **"Try our sample room"** (or upload your own photo) and render —
    your 2 free previews are watermarked
-5. Click **Buy 5 images — $5** → Stripe test checkout opens
+5. Click **Buy 5 images for $5** (on the dashboard or the out-of-images bar) →
+   Stripe test checkout opens
 6. Pay with card **4242 4242 4242 4242**, any future expiry, any CVC
 7. You're back with 5 credits — renders are now clean, full-res, downloadable
 
