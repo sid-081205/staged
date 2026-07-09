@@ -93,11 +93,6 @@ export default function RenderTracker() {
                 <p className="mt-0.5 truncate text-muted">
                   {roomLabel(item.roomType)} · {modeLabel(item.style)}
                 </p>
-                {item.status === "processing" && (
-                  <p className="mt-0.5 text-xs text-muted">
-                    Keep browsing. We&rsquo;ll keep working in the background.
-                  </p>
-                )}
                 {item.status === "failed" && item.error && (
                   <p className="mt-0.5 text-xs text-muted">{item.error}</p>
                 )}

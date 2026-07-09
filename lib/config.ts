@@ -1,10 +1,16 @@
-export const PACK_PRICE_CENTS = Number(process.env.PRICE_CENTS ?? 500);
-export const PACK_CREDITS = 5;
+export const PACK_PRICE_CENTS = Number(process.env.PRICE_CENTS ?? 300);
+export const PACK_CREDITS = 10;
 export const PACK_LABEL = `$${(PACK_PRICE_CENTS / 100).toFixed(0)}`;
-export const PER_IMAGE_LABEL = `$${(PACK_PRICE_CENTS / PACK_CREDITS / 100).toFixed(0)}`;
+
+const PER_IMAGE_CENTS = PACK_PRICE_CENTS / PACK_CREDITS;
+/** "30¢" below a dollar, "$1" at or above, so the label reads naturally. */
+export const PER_IMAGE_LABEL =
+  PER_IMAGE_CENTS >= 100 && PER_IMAGE_CENTS % 100 === 0
+    ? `$${PER_IMAGE_CENTS / 100}`
+    : `${Math.round(PER_IMAGE_CENTS)}¢`;
 
 /** Watermarked previews every account gets before buying credits. */
-export const FREE_PREVIEWS = 2;
+export const FREE_PREVIEWS = 1;
 
 export const MAX_PHOTOS = 10;
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;

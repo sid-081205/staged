@@ -17,18 +17,18 @@ export const metadata: Metadata = {
     template: "%s | Staged",
   },
   description:
-    "Upload photos of empty rooms. Download them professionally furnished minutes later. $1 per image, no subscription. Stage for sale listings or Airbnb, remove furniture, or fix the lighting.",
+    "Upload photos of empty rooms. Download them professionally furnished minutes later. $3 for 10 images, no subscription. Stage for sale listings or Airbnb, remove furniture, or fix the lighting.",
   openGraph: {
     title: "Staged | Empty rooms don't sell",
     description:
-      "AI virtual staging for real estate listings and Airbnbs. $1 per image, renders in minutes, free previews.",
+      "AI virtual staging for real estate listings and Airbnbs. $3 for 10 images, renders in minutes, free preview.",
     images: ["/demo/after.jpg"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Staged | Empty rooms don't sell",
-    description: "AI virtual staging for real estate listings and Airbnbs. $1 per image, free previews.",
+    description: "AI virtual staging for real estate listings and Airbnbs. $3 for 10 images, free preview.",
     images: ["/demo/after.jpg"],
   },
 };

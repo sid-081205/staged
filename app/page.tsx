@@ -14,7 +14,7 @@ import {
 const faq: [string, string][] = [
   [
     "How does pricing work?",
-    `${PACK_LABEL} buys ${PACK_CREDITS} images, which works out to ${PER_IMAGE_LABEL} per image for any edit. Packs stack and credits never expire. Every new account also gets ${FREE_PREVIEWS} free watermarked previews to try it first.`,
+    `${PACK_LABEL} buys ${PACK_CREDITS} images, which works out to ${PER_IMAGE_LABEL} per image for any edit. Packs stack and credits never expire. Every new account also gets ${FREE_PREVIEWS} free watermarked preview to try it first.`,
   ],
   [
     "Do I need an account?",
@@ -55,9 +55,18 @@ const faq: [string, string][] = [
 ];
 
 const steps: [string, string][] = [
-  ["Sign in", "Email in, 6 digit code back, you're in. No password to invent. Your images and credits live on your account."],
-  ["Upload and choose an edit", `Up to 10 photos per listing. Pick what you need: stage with furniture (${FURNITURE_STYLE_COUNT} styles for sale listings and Airbnbs), remove furniture and clutter, or fix the lighting. There is also a box for specific requests. A render takes a few minutes.`],
-  ["Download", "Full resolution, no watermark, yours outright. One click adds the MLS \"Virtually staged\" disclosure label."],
+  [
+    "Sign in",
+    "The simplest onboarding possible. Type your email, enter the 6 digit code we send you, and you're in. Everything (your listings, images and credits) is linked to your email. No passwords, no forms, no card.",
+  ],
+  [
+    "Stage it",
+    `Upload your photos and pick one of three edits: stage with furniture (${FURNITURE_STYLE_COUNT} styles for sale listings and Airbnbs), remove furniture and clutter, or fix the lighting and sky. A custom prompt box lets you add anything specific, like a grand piano or warmer tones.`,
+  ],
+  [
+    "Download",
+    "Full resolution, no watermark, yours outright. One click adds the MLS \"Virtually staged\" disclosure label. And if you're not happy with the results, just email us and we'll give you a refund.",
+  ],
 ];
 
 const offerings: {
@@ -103,12 +112,12 @@ const offerings: {
 ];
 
 const comparison: [string, string, string, string][] = [
-  ["Cost for 8 photos", "$8", "$128 to $240", "$2,000 to $6,000"],
-  ["Turnaround", "Minutes", "24 to 48 hours", "1 to 2 weeks"],
-  ["Revisions", `${PER_IMAGE_LABEL} per render`, "$5 to $15 each", "Reshoot"],
-  ["Styles to compare", `${FURNITURE_STYLE_COUNT} per photo`, "1 per order", "1"],
-  ["Furniture removal", "Included", "Extra fee", "Movers"],
-  ["Photo enhancement", "Included", "$2 to $4 per photo", "Not offered"],
+  ["Cost for 8 photos", "$2.40", "$240", "$1,500 median per home"],
+  ["Turnaround", "Minutes", "Up to 48 hours", "Days, plus a 30 to 90 day furniture rental"],
+  ["Revisions", `${PER_IMAGE_LABEL} per render`, "Free within 2 months", "Restage"],
+  ["Styles to compare", `${FURNITURE_STYLE_COUNT} per photo`, "9 styles, 1 per order", "1"],
+  ["Furniture removal", "Included", "$5 to $10 per image", "Movers"],
+  ["Photo enhancement", "Included", "$2 per image", "Not offered"],
 ];
 
 export default function Home() {
@@ -124,7 +133,7 @@ export default function Home() {
             <a href="#pricing" className="hidden hover:text-ink sm:block">Pricing</a>
             <a href="#faq" className="hidden hover:text-ink sm:block">FAQ</a>
             <Link
-              href="/stage"
+              href="/dashboard"
               className="rounded-xl border border-ink bg-ink px-4 py-2 text-paper transition-colors hover:bg-transparent hover:text-ink"
             >
               Stage a room
@@ -156,10 +165,10 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
-                href="/stage"
+                href="/dashboard"
                 className="rounded-xl border border-ink bg-ink px-6 py-3.5 text-paper transition-colors hover:bg-transparent hover:text-ink"
               >
-                Start staging with {FREE_PREVIEWS} free previews
+                Start staging, first preview free
               </Link>
               <a href="#styles" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
                 See the styles ↓
@@ -177,25 +186,10 @@ export default function Home() {
           </Reveal>
         </section>
 
-        {/* Facts strip */}
-        <section className="grid overflow-hidden rounded-2xl border border-line text-center sm:grid-cols-4">
-          {[
-            [PER_IMAGE_LABEL, "per image, flat"],
-            [`${PACK_LABEL} / ${PACK_CREDITS}`, "images per pack, credits never expire"],
-            ["3 edits", "stage, remove clutter, fix lighting"],
-            ["8 in 10", "buyers' agents say staging helps buyers visualize a home*"],
-          ].map(([big, small], i) => (
-            <div key={big} className={`px-4 py-8 ${i > 0 ? "border-t border-line sm:border-l sm:border-t-0" : ""}`}>
-              <div className="font-serif text-3xl">{big}</div>
-              <div className="mx-auto mt-1 max-w-[22ch] text-sm text-muted">{small}</div>
-            </div>
-          ))}
-        </section>
-        <p className="pt-3 text-right text-xs text-muted">*National Association of Realtors, Profile of Home Staging</p>
       </main>
 
       {/* Style marquee */}
-      <div className="mt-16 overflow-hidden border-y border-line bg-paper-2 py-3">
+      <div className="overflow-hidden border-y border-line bg-paper-2 py-3">
         <div className="marquee-track gap-0">
           {[0, 1].map((n) => (
             <div key={n} className="flex shrink-0 items-center">
@@ -300,7 +294,7 @@ export default function Home() {
                   <tr className="border-b border-line bg-paper-2">
                     <th className="px-4 py-3 font-medium text-muted"> </th>
                     <th className="px-4 py-3 font-serif text-lg">Staged.</th>
-                    <th className="px-4 py-3 font-medium text-muted">Human virtual staging</th>
+                    <th className="px-4 py-3 font-medium text-muted">BoxBrownie (human editors)</th>
                     <th className="px-4 py-3 font-medium text-muted">Physical staging</th>
                   </tr>
                 </thead>
@@ -316,8 +310,27 @@ export default function Home() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-muted">
-              Typical published rates: human virtual staging $16 to $30 per photo (BoxBrownie, Styldod); physical staging $2,000 to $6,000 per property.
+            <p className="mt-3 max-w-3xl text-xs leading-relaxed text-muted">
+              Sources:{" "}
+              <a
+                href="https://www.boxbrownie.com/virtual-staging"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-ink"
+              >
+                BoxBrownie published price list
+              </a>{" "}
+              (virtual staging $30 per image, image enhancement $2 per image, item removal $5 to $10 per
+              image, up to 48 hour turnaround, 9 design styles with free revisions for 2 months);{" "}
+              <a
+                href="https://www.nar.realtor/press-releases/nar-report-reveals-home-staging-boosts-sale-prices-and-reduces-time-on-market"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-ink"
+              >
+                National Association of Realtors, 2025 Profile of Home Staging
+              </a>{" "}
+              (median cost of a professional physical staging service: $1,500 per home).
             </p>
           </Reveal>
         </section>
@@ -337,9 +350,8 @@ export default function Home() {
                 whenever. They never expire.
               </p>
               <p className="mt-4 max-w-md leading-relaxed text-muted">
-                On a typical 3% commission, a whole pack pays for itself if it
-                moves the sale price by <span className="text-ink">0.0005%</span>.
-                It only needs to make one browser click through to one showing.
+                A whole pack costs {PACK_LABEL}, less than a coffee. One extra
+                showing pays for years of it.
               </p>
             </Reveal>
             <Reveal delay={120}>
@@ -365,10 +377,10 @@ export default function Home() {
                   ))}
                 </ul>
                 <p className="mt-6 border-t border-line pt-4 text-sm text-muted">
-                  Try first: every account starts with {FREE_PREVIEWS} free watermarked previews. No card required.
+                  Try first: every account starts with {FREE_PREVIEWS} free watermarked preview. No card required.
                 </p>
                 <Link
-                  href="/stage"
+                  href="/dashboard"
                   className="mt-6 block rounded-xl border border-ink bg-ink px-6 py-3.5 text-center text-paper transition-colors hover:bg-transparent hover:text-ink"
                 >
                   Start staging
@@ -380,29 +392,31 @@ export default function Home() {
 
         {/* FAQ */}
         <section id="faq" className="border-t border-line py-20 md:py-28">
-          <div className="grid gap-12 md:grid-cols-[1fr_1.6fr]">
+          <div className="mx-auto max-w-3xl">
             <Reveal>
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Questions</p>
-              <h2 className="mt-3 font-serif text-4xl">Asked and answered.</h2>
-              <p className="mt-4 leading-relaxed text-muted">
-                Something else?{" "}
-                <a href="mailto:hello@staged.example" className="text-ink underline underline-offset-4">
-                  Email us
-                </a>
-                . A person replies.
-              </p>
+              <div className="text-center">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Questions</p>
+                <h2 className="mt-3 font-serif text-4xl">Asked and answered.</h2>
+                <p className="mt-4 leading-relaxed text-muted">
+                  Something else?{" "}
+                  <a href="mailto:hello@staged.example" className="text-ink underline underline-offset-4">
+                    Email us
+                  </a>
+                  . A person replies.
+                </p>
+              </div>
             </Reveal>
             <Reveal delay={100}>
-              <div className="divide-y divide-line border-y border-line">
+              <div className="mt-12 divide-y divide-line border-y border-line">
                 {faq.map(([q, a]) => (
-                  <details key={q} className="group py-4">
+                  <details key={q} className="group py-5">
                     <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
                       {q}
                       <span className="ml-4 shrink-0 text-muted transition-transform duration-200 group-open:rotate-45">
                         +
                       </span>
                     </summary>
-                    <p className="mt-3 max-w-xl leading-relaxed text-muted">{a}</p>
+                    <p className="mt-3 leading-relaxed text-muted">{a}</p>
                   </details>
                 ))}
               </div>
@@ -419,10 +433,10 @@ export default function Home() {
               <em className="text-accent">Fix that for {PER_IMAGE_LABEL} a photo.</em>
             </h2>
             <Link
-              href="/stage"
+              href="/dashboard"
               className="mt-10 inline-block rounded-2xl border border-ink bg-ink px-8 py-4 text-lg text-paper transition-colors hover:bg-transparent hover:text-ink"
             >
-              Start staging with {FREE_PREVIEWS} free previews
+              Start staging, first preview free
             </Link>
           </Reveal>
         </section>
@@ -450,7 +464,7 @@ export default function Home() {
                 <p className="font-medium">Account</p>
                 <Link href="/signin" className="block text-muted hover:text-ink">Sign in</Link>
                 <Link href="/dashboard" className="block text-muted hover:text-ink">Dashboard</Link>
-                <Link href="/stage" className="block text-muted hover:text-ink">Stage a room</Link>
+                <Link href="/dashboard" className="block text-muted hover:text-ink">Stage a room</Link>
               </div>
               <div className="space-y-2">
                 <p className="font-medium">Contact</p>

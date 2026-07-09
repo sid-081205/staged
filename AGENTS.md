@@ -29,7 +29,7 @@ Virtual staging for real estate listings (Next.js 16 App Router + SQLite). See
   - Stripe checkout (`/api/checkout`) needs `STRIPE_SECRET_KEY` /
     `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`; without them `lib/stripe.ts`
     `getStripe()` returns null and buying credit packs is unavailable. Every
-    new account still gets 2 free watermarked previews, so the core sign-in →
+    new account still gets 1 free watermarked preview, so the core sign-in →
     upload → render flow works with zero external keys.
 - **Lint is not usable as-is**: `npm run lint` runs `next lint`, which was
   removed in Next.js 16 (it now mis-parses `lint` as a directory and fails).

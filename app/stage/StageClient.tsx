@@ -94,7 +94,11 @@ export default function StageClient() {
     const review = params.get("review");
     const storedJob = localStorage.getItem(JOB_KEY);
     const jobId = urlJob || storedJob;
-    if (review) setReviewId(review);
+    if (review) {
+      setReviewId(review);
+      // Drop the review param so a refresh doesn't reopen the modal.
+      window.history.replaceState({}, "", jobId ? `/stage?job=${jobId}` : "/stage");
+    }
 
     (async () => {
       if (sessionId) {
@@ -153,19 +157,6 @@ export default function StageClient() {
       window.history.replaceState({}, "", `/stage?job=${data.id}`);
     } catch (e) {
       showError(e instanceof Error ? e.message : "Upload failed.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function useSamplePhoto() {
-    setUploading(true);
-    setError(null);
-    try {
-      const blob = await fetch("/demo/before.jpg").then((r) => r.blob());
-      await upload([new File([blob], "sample-living-room.jpg", { type: "image/jpeg" })]);
-    } catch {
-      showError("Could not load the sample photo.");
     } finally {
       setUploading(false);
     }
@@ -271,7 +262,7 @@ export default function StageClient() {
       {/* Free-preview notice */}
       {!justPurchased && onFreePreviews && (
         <div className="mt-6 rounded-2xl border border-line bg-paper-2 px-4 py-3 text-sm text-muted">
-          You&rsquo;re on free previews (watermarked, {freeLeft} left). Buy {PACK_CREDITS} images for {PACK_LABEL} to
+          You&rsquo;re on your free preview (watermarked, {freeLeft} left). Buy {PACK_CREDITS} images for {PACK_LABEL} to
           get clean full resolution downloads.
         </div>
       )}
@@ -304,15 +295,6 @@ export default function StageClient() {
           >
             {uploading ? "Uploading…" : "Choose photos"}
           </button>
-          {!job && (
-            <button
-              onClick={useSamplePhoto}
-              disabled={uploading}
-              className="rounded-xl border border-line px-5 py-2.5 text-muted transition-colors hover:border-ink hover:text-ink disabled:opacity-50"
-            >
-              No photo handy? Try our sample room
-            </button>
-          )}
         </div>
         <input
           ref={fileInput}
@@ -368,7 +350,7 @@ export default function StageClient() {
       {/* First-visit hint */}
       {!job && (
         <p className="mt-8 text-center text-sm text-muted">
-          Every account starts with {FREE_PREVIEWS} free watermarked previews. Packs are {PACK_LABEL} for{" "}
+          Every account starts with {FREE_PREVIEWS} free watermarked preview. Packs are {PACK_LABEL} for{" "}
           {PACK_CREDITS} clean full resolution images.
         </p>
       )}
@@ -431,6 +413,10 @@ function PhotoCard({
   const [extra, setExtra] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [compare, setCompare] = useState<RenderInfo | null>(null);
+  // The review id must open the modal exactly once. Without this guard the
+  // effect re-fires on every poll refresh (renders is a fresh array each
+  // time) and reopens the modal right after the user closes it.
+  const consumedReview = useRef<string | null>(null);
 
   const done = renders.filter((r) => r.status === "done");
   const processing = renders.filter((r) => r.status === "processing");
@@ -440,9 +426,12 @@ function PhotoCard({
 
   // Auto-open the compare view when arriving from the progress widget's Review.
   useEffect(() => {
-    if (!autoReviewId) return;
+    if (!autoReviewId || consumedReview.current === autoReviewId) return;
     const match = done.find((r) => r.id === autoReviewId);
-    if (match) setCompare(match);
+    if (match) {
+      consumedReview.current = autoReviewId;
+      setCompare(match);
+    }
   }, [autoReviewId, done]);
 
   async function submit() {

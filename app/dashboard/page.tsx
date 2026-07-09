@@ -73,7 +73,7 @@ export default async function DashboardPage({
           <p className="mt-1 text-sm text-muted">Clean, full resolution, any edit.</p>
         </div>
         <div className="rounded-2xl border border-line p-6">
-          <p className="text-xs uppercase tracking-widest text-muted">Free previews left</p>
+          <p className="text-xs uppercase tracking-widest text-muted">Free preview left</p>
           <p className="mt-1 font-serif text-4xl">{freeLeft}</p>
           <p className="mt-1 text-sm text-muted">Watermarked, for trying it out.</p>
         </div>
@@ -105,7 +105,7 @@ export default async function DashboardPage({
         <div className="rounded-3xl border border-dashed border-line p-16 text-center">
           <p className="font-serif text-2xl">Nothing here yet.</p>
           <p className="mt-2 text-muted">
-            Stage your first listing. Your first {FREE_PREVIEWS} previews are free.
+            Stage your first listing. Your first preview is free.
           </p>
           <Link
             href="/stage"
