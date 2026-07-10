@@ -1,4 +1,7 @@
-export const PACK_PRICE_CENTS = Number(process.env.PRICE_CENTS ?? 300);
+// Hardcoded (not an env var) on purpose: this file is imported by client
+// components, and a server-only env var would be undefined in the browser,
+// making the server and client render different prices (hydration error).
+export const PACK_PRICE_CENTS = 300;
 export const PACK_CREDITS = 10;
 export const PACK_LABEL = `$${(PACK_PRICE_CENTS / 100).toFixed(0)}`;
 

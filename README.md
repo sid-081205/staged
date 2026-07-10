@@ -86,7 +86,6 @@ Fill in `.env`:
 | `RESEND_API_KEY` | [Resend](https://resend.com) key for sign-in code emails (free tier: 3,000/month). If unset in dev, the code is shown on the sign-in page instead. |
 | `EMAIL_FROM` | Sender, e.g. `Staged <signin@yourdomain.com>`. The default `onboarding@resend.dev` only delivers to the Resend account owner until you verify a domain. |
 | `SITE_URL` | Public URL, used for Stripe redirects. |
-| `PRICE_CENTS` | Price of one 10-image pack in cents, default `300`. |
 | `MOCK_GENERATION` | Set to `1` to fake renders (tinted copy, no agent credits used). |
 
 No other services required. State is a SQLite file plus image files, all under
@@ -127,7 +126,8 @@ Stripe session id, so verify + webhook can both fire without double-granting.
   generation — roughly $0.05–0.15 depending on run length.
 - A $3 pack (10 renders): ~$0.50–1.50 generation cost + ~$0.39 Stripe fee
   (2.9% + 30¢) → roughly 35–70% gross margin. Watch actual per-render agent
-  cost; if it trends toward the high end, raise `PRICE_CENTS`.
+  cost; if it trends toward the high end, raise `PACK_PRICE_CENTS` in
+  `lib/config.ts` (hardcoded there so the client and server always agree).
 - The 1 free preview per account costs ~$0.05–0.15 in acquisition.
 
 ## Production cost (~$3–5/month fixed)
