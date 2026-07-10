@@ -1,9 +1,8 @@
 {
   "_comment": "Models to try. Run `node run.mjs --list` to fetch the live list of models your account can use (from GET /v1/models), then edit this array. Each entry is a model id; optionally add params, e.g. { \"id\": \"composer-2\", \"params\": [{ \"id\": \"fast\", \"value\": \"true\" }] }.",
+  "_already_in_results": ["composer-2.5", "gpt-5.6-sol", "gemini-3.1-pro", "claude-opus-4-8"],
   "models": [
-    { "id": "composer-2.5" },
-    { "id": "gpt-5.6-sol" },
-    { "id": "gemini-3.1-pro" },
-    { "id": "claude-opus-4-8" }
+    { "id": "gpt-5.3-codex" },
+    { "id": "claude-sonnet-5" }
   ]
 }
