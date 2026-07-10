@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function SignInClient() {
   const [email, setEmail] = useState("");
@@ -60,15 +61,9 @@ export default function SignInClient() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6">
-      <header className="flex items-center justify-between border-b border-line py-5">
-        <Link href="/" className="font-serif text-2xl">
-          Staged.
-        </Link>
-        <Link href="/" className="text-sm text-muted hover:text-ink">
-          Back to home
-        </Link>
-      </header>
+    <>
+      <SiteHeader />
+      <div className="mx-auto max-w-5xl px-6">
 
       <div className="mx-auto max-w-md py-24">
         <h1 className="font-serif text-4xl">Sign in</h1>
@@ -137,6 +132,7 @@ export default function SignInClient() {
 
         {error && <p className="mt-4 rounded-xl border border-ink/20 bg-paper-2 px-4 py-3 text-sm">{error}</p>}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

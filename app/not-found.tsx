@@ -9,7 +9,7 @@ export default function NotFound() {
         href="/"
         className="mt-8 rounded-xl border border-ink bg-ink px-6 py-3 text-paper transition-colors hover:bg-transparent hover:text-ink"
       >
-        Back to Staged.
+        Back to Stagely
       </Link>
     </div>
   );

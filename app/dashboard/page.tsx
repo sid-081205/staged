@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import SiteHeader from "@/components/SiteHeader";
 import { currentUser } from "@/lib/auth";
 import { countSuccessfulRenders, getUser, grantCredits, jobPhotos, jobsForUser } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
@@ -43,20 +44,20 @@ export default async function DashboardPage({
   const freeLeft = Math.max(0, FREE_PREVIEWS - user.free_used);
 
   return (
-    <div className="mx-auto max-w-5xl px-6">
-      <header className="flex items-center justify-between border-b border-line py-5">
-        <Link href="/" className="font-serif text-2xl">
-          Staged.
-        </Link>
-        <div className="flex items-center gap-5 text-sm">
-          <span className="text-muted">{user.email}</span>
-          <form action="/api/auth/logout" method="post">
-            <button className="text-muted underline-offset-2 hover:text-ink hover:underline">
-              Sign out
-            </button>
-          </form>
-        </div>
-      </header>
+    <>
+      <SiteHeader
+        trailing={
+          <>
+            <span className="hidden text-muted lg:inline">{user.email}</span>
+            <form action="/api/auth/logout" method="post">
+              <button className="text-muted underline-offset-2 hover:text-ink hover:underline">
+                Sign out
+              </button>
+            </form>
+          </>
+        }
+      />
+      <div className="mx-auto max-w-5xl px-6">
 
       {justPurchased && (
         <div className="mt-6 rounded-2xl border border-accent bg-paper-2 px-4 py-3 text-sm">
@@ -135,6 +136,7 @@ export default async function DashboardPage({
       )}
 
       <div className="h-24" />
-    </div>
+      </div>
+    </>
   );
 }

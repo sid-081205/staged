@@ -1,5 +1,7 @@
 import Link from "next/link";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import Logo from "@/components/Logo";
+import SiteHeader from "@/components/SiteHeader";
 import StyleGallery from "@/components/StyleGallery";
 import Reveal from "@/components/Reveal";
 import {
@@ -8,7 +10,6 @@ import {
   PACK_CREDITS,
   PACK_LABEL,
   PER_IMAGE_LABEL,
-  STYLES,
 } from "@/lib/config";
 
 const faq: [string, string][] = [
@@ -43,6 +44,10 @@ const faq: [string, string][] = [
   [
     "Does it change the room itself?",
     "No. Walls, windows, floors, and fixtures stay as photographed. Only furniture and decor are added. Every render is checked against your original photo before it is delivered, and if one still alters the architecture, regenerate it.",
+  ],
+  [
+    "Why is this better than other AI tools?",
+    "We use the best intelligent models and give you a fraction of what any business does. If you find another real estate image company with a lower price, we will match them. We also use custom skills and prompting to ensure your image does not get distorted, which is common with AI models of today.",
   ],
   [
     "Who owns the images?",
@@ -123,31 +128,14 @@ const comparison: [string, string, string, string][] = [
 export default function Home() {
   return (
     <div>
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/85 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-serif text-2xl">Staged.</span>
-          <nav className="flex items-center gap-6 text-sm text-muted">
-            <a href="#offerings" className="hidden hover:text-ink sm:block">What it does</a>
-            <a href="#styles" className="hidden hover:text-ink sm:block">Styles</a>
-            <a href="#pricing" className="hidden hover:text-ink sm:block">Pricing</a>
-            <a href="#faq" className="hidden hover:text-ink sm:block">FAQ</a>
-            <Link
-              href="/dashboard"
-              className="rounded-xl border border-ink bg-ink px-4 py-2 text-paper transition-colors hover:bg-transparent hover:text-ink"
-            >
-              Stage a room
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
-        <section className="grid gap-12 py-16 md:grid-cols-[1fr_1.1fr] md:items-center md:py-24">
+        <section className="grid gap-12 py-12 md:grid-cols-[1fr_1.1fr] md:items-center md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
-              Virtual staging for real estate agents
+              Virtual Staging for Homes
             </p>
             <h1 className="mt-4 font-serif text-5xl leading-[1.04] md:text-[4.2rem]">
               Empty rooms
@@ -156,12 +144,11 @@ export default function Home() {
               <br />
               <em className="text-accent">Staged ones do.</em>
             </h1>
-            <p className="mt-6 max-w-md text-lg leading-relaxed text-muted">
-              Upload a photo of an empty room. Download it professionally
-              furnished minutes later. We use the best image models with custom
-              knowledge of your real estate needs (correct furniture scale, MLS
-              safe architecture and true to photo light) so every render looks
-              like a professional listing photo.
+            <p className="mt-6 max-w-md text-base leading-relaxed text-muted">
+              Upload a photo of an empty room. Download it professionally furnished,
+              minutes later. Stagely uses the best image models tuned for real estate:
+              correct furniture scale, MLS-safe architecture, and lighting true to the
+              original photo. Every render looks like a listing shot.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
@@ -186,30 +173,46 @@ export default function Home() {
           </Reveal>
         </section>
 
-      </main>
+        {/* Staging stats */}
+        <section className="border-t border-line py-12 md:py-16">
+          <Reveal>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Why stage at all</p>
+            <h2 className="mt-3 font-serif text-4xl">Buyers pay more for rooms they can picture.</h2>
+          </Reveal>
+          <div className="mt-10 grid gap-8 md:grid-cols-3">
+            {(
+              [
+                ["83%", "of buyers' agents say staging makes it easier to visualize a property as their future home."],
+                ["29%", "of agents reported staging led to a 1% to 10% increase in the dollar value offered."],
+                ["49%", "of sellers' agents saw staging reduce time on the market."],
+              ] as [string, string][]
+            ).map(([stat, body], i) => (
+              <Reveal key={stat} delay={i * 120}>
+                <div className="rounded-2xl border border-line p-6">
+                  <p className="font-serif text-5xl text-accent">{stat}</p>
+                  <p className="mt-3 leading-relaxed text-muted">{body}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            Source:{" "}
+            <a
+              href="https://www.nar.realtor/press-releases/nar-report-reveals-home-staging-boosts-sale-prices-and-reduces-time-on-market"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-ink"
+            >
+              National Association of Realtors, 2025 Profile of Home Staging
+            </a>
+          </p>
+        </section>
 
-      {/* Style marquee */}
-      <div className="overflow-hidden border-y border-line bg-paper-2 py-3">
-        <div className="marquee-track gap-0">
-          {[0, 1].map((n) => (
-            <div key={n} className="flex shrink-0 items-center">
-              {Object.values(STYLES).map((s) => (
-                <span key={`${n}-${s.label}`} className="flex items-center whitespace-nowrap px-6 text-sm uppercase tracking-[0.25em] text-muted">
-                  {s.label}
-                  <span className="ml-12 text-accent">·</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-6xl px-6">
         {/* Core offerings */}
-        <section id="offerings" className="py-20 md:py-28">
+        <section id="offerings" className="border-t border-line py-12 md:py-16">
           <Reveal>
             <div className="max-w-2xl">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">What Staged does</p>
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">What Stagely does</p>
               <h2 className="mt-3 font-serif text-4xl">Stage it. Clear it. Fix the light.</h2>
               <p className="mt-4 leading-relaxed text-muted">
                 Three edits, one tool. Furnish empty rooms for a sale listing or an
@@ -219,7 +222,7 @@ export default function Home() {
               </p>
             </div>
           </Reveal>
-          <div className="mt-12 space-y-16">
+          <div className="mt-10 space-y-12">
             {offerings.map((o, i) => (
               <Reveal key={o.id} delay={i * 80}>
                 <div className="grid items-center gap-8 md:grid-cols-2">
@@ -243,7 +246,7 @@ export default function Home() {
         </section>
 
         {/* Style gallery */}
-        <section id="styles" className="border-t border-line py-20 md:py-28">
+        <section id="styles" className="border-t border-line py-12 md:py-16">
           <Reveal>
             <div className="max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">One photo, many directions</p>
@@ -253,7 +256,7 @@ export default function Home() {
                 the luxury treatment. An Airbnb needs to look warm and guest ready.
                 Render the same room across {FURNITURE_STYLE_COUNT} styles and pick
                 what fits. Every style below is the identical photo, staged by
-                Staged.
+                Stagely.
               </p>
             </div>
           </Reveal>
@@ -263,12 +266,12 @@ export default function Home() {
         </section>
 
         {/* How it works */}
-        <section className="border-t border-line py-20 md:py-28">
+        <section className="border-t border-line py-12 md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Three steps</p>
             <h2 className="mt-3 font-serif text-4xl">Listing ready before your coffee cools.</h2>
           </Reveal>
-          <div className="mt-12 grid gap-10 md:grid-cols-3">
+          <div className="mt-10 grid gap-8 md:grid-cols-3">
             {steps.map(([title, body], i) => (
               <Reveal key={title} delay={i * 120}>
                 <div className="rounded-2xl border border-line p-6">
@@ -282,40 +285,50 @@ export default function Home() {
         </section>
 
         {/* Comparison */}
-        <section className="border-t border-line py-20 md:py-28">
+        <section className="border-t border-line py-12 md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">The math</p>
             <h2 className="mt-3 font-serif text-4xl">Same photos on the MLS. Very different invoice.</h2>
           </Reveal>
           <Reveal delay={100}>
             <div className="mt-10 overflow-x-auto">
-              <table className="w-full min-w-[720px] table-fixed overflow-hidden rounded-2xl border border-line text-left text-[15px]">
-                <colgroup>
-                  <col className="w-[26%]" />
-                  <col className="w-[24%]" />
-                  <col className="w-[25%]" />
-                  <col className="w-[25%]" />
-                </colgroup>
+              <table className="w-full min-w-[760px] border-collapse overflow-hidden rounded-2xl border border-line text-[15px]">
                 <thead>
-                  <tr className="border-b border-line bg-paper-2 align-top">
-                    <th className="px-4 py-4 font-medium text-muted" />
-                    <th className="px-4 py-4 font-serif text-lg">Staged.</th>
-                    <th className="px-4 py-4 font-medium text-muted">
+                  <tr className="bg-paper-2">
+                    <th className="border-b border-r border-line px-4 py-4 text-left font-medium text-muted" />
+                    <th className="border-b border-r border-line px-4 py-4 text-center font-serif text-lg">
+                      Stagely
+                    </th>
+                    <th className="border-b border-r border-line px-4 py-4 text-center font-medium text-muted">
                       BoxBrownie
                       <span className="mt-0.5 block text-xs font-normal leading-snug">(human editors)</span>
                     </th>
-                    <th className="px-4 py-4 font-medium text-muted">Physical staging</th>
+                    <th className="border-b border-line px-4 py-4 text-center font-medium text-muted">
+                      Physical staging
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {comparison.map(([label, us, virtual, physical]) => (
-                    <tr key={label} className="border-b border-line align-top last:border-b-0">
-                      <td className="px-4 py-4 text-muted">{label}</td>
-                      <td className="px-4 py-4 font-medium">{us}</td>
-                      <td className="px-4 py-4 text-muted">{virtual}</td>
-                      <td className="px-4 py-4 text-muted">{physical}</td>
-                    </tr>
-                  ))}
+                  {comparison.map(([label, us, virtual, physical], i) => {
+                    const rowBorder = i < comparison.length - 1 ? "border-b border-line" : "";
+                    const priceClass = label.startsWith("Cost") ? "tabular-price tabular-price--nowrap" : "tabular-price";
+                    return (
+                      <tr key={label}>
+                        <td className={`border-r border-line px-4 py-4 text-left text-muted ${rowBorder}`}>
+                          {label}
+                        </td>
+                        <td className={`border-r border-line px-4 py-4 text-center ${rowBorder}`}>
+                          <span className={`${priceClass} font-medium`}>{us}</span>
+                        </td>
+                        <td className={`border-r border-line px-4 py-4 text-center ${rowBorder}`}>
+                          <span className={`${priceClass} text-muted`}>{virtual}</span>
+                        </td>
+                        <td className={`px-4 py-4 text-center ${rowBorder}`}>
+                          <span className={`${priceClass} text-muted`}>{physical}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -345,8 +358,8 @@ export default function Home() {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="border-t border-line py-20 md:py-28">
-          <div className="grid gap-12 md:grid-cols-2">
+        <section id="pricing" className="border-t border-line py-12 md:py-16">
+          <div className="grid gap-10 md:grid-cols-2">
             <Reveal>
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Pricing</p>
               <h2 className="mt-3 font-serif text-4xl">
@@ -400,7 +413,7 @@ export default function Home() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="border-t border-line py-20 md:py-28">
+        <section id="faq" className="border-t border-line py-12 md:py-16">
           <div className="mx-auto max-w-3xl">
             <Reveal>
               <div className="text-center">
@@ -408,7 +421,7 @@ export default function Home() {
                 <h2 className="mt-3 font-serif text-4xl">Asked and answered.</h2>
                 <p className="mt-4 leading-relaxed text-muted">
                   Something else?{" "}
-                  <a href="mailto:hello@staged.example" className="text-ink underline underline-offset-4">
+                  <a href="mailto:stagelyhelp@gmail.com" className="text-ink underline underline-offset-4">
                     Email us
                   </a>
                   . A person replies.
@@ -416,7 +429,7 @@ export default function Home() {
               </div>
             </Reveal>
             <Reveal delay={100}>
-              <div className="mt-12 divide-y divide-line border-y border-line">
+              <div className="mt-10 divide-y divide-line border-y border-line">
                 {faq.map(([q, a]) => (
                   <details key={q} className="group py-5">
                     <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
@@ -434,7 +447,7 @@ export default function Home() {
         </section>
 
         {/* Final CTA */}
-        <section className="border-t border-line py-24 text-center md:py-32">
+        <section className="border-t border-line py-12 text-center md:py-16">
           <Reveal>
             <h2 className="mx-auto max-w-2xl font-serif text-4xl leading-tight md:text-5xl">
               Your next listing has empty rooms.
@@ -456,7 +469,10 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div>
-              <span className="font-serif text-3xl">Staged.</span>
+              <span className="flex items-center gap-2.5 font-serif text-3xl">
+                <Logo className="h-8 w-8" />
+                Stagely
+              </span>
               <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
                 Virtual staging for real estate listings and Airbnbs. Upload empty
                 rooms, download furnished ones.
@@ -477,8 +493,8 @@ export default function Home() {
               </div>
               <div className="space-y-2">
                 <p className="font-medium">Contact</p>
-                <a href="mailto:hello@staged.example" className="block text-muted hover:text-ink">
-                  hello@staged.example
+                <a href="mailto:stagelyhelp@gmail.com" className="block text-muted hover:text-ink">
+                  stagelyhelp@gmail.com
                 </a>
               </div>
             </div>

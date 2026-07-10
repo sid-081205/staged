@@ -14,8 +14,10 @@ export default function Reveal({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const el = ref.current;
     if (!el) return;
 
@@ -49,9 +51,11 @@ export default function Reveal({
       ref={ref}
       className={className}
       style={{
-        opacity: shown ? 1 : 0,
-        transform: shown ? "none" : "translateY(20px)",
-        transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
+        opacity: !mounted || shown ? 1 : 0,
+        transform: !mounted || shown ? "none" : "translateY(20px)",
+        transition: mounted
+          ? `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`
+          : undefined,
       }}
     >
       {children}

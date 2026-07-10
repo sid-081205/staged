@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import SiteHeader from "@/components/SiteHeader";
 import {
   FREE_PREVIEWS,
   MAX_EXTRA_PROMPT,
@@ -225,26 +226,19 @@ export default function StageClient() {
   const onFreePreviews = credits <= 0 && freeLeft > 0;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pb-36">
-      <header className="sticky top-0 z-40 -mx-6 border-b border-line bg-paper/85 px-6 backdrop-blur-sm">
-        <div className="flex items-center justify-between py-4">
-          <Link href="/" className="font-serif text-2xl">
-            Staged.
-          </Link>
-          <div className="flex items-center gap-5 text-sm">
-            {user && (
-              <span className={`hidden rounded-full border border-line px-3 py-1 sm:block ${outOfRenders ? "text-ink" : "text-muted"}`}>
-                {credits > 0
-                  ? `${credits} image${credits === 1 ? "" : "s"} left`
-                  : `${freeLeft} free preview${freeLeft === 1 ? "" : "s"} left`}
-              </span>
-            )}
-            <Link href="/dashboard" className="text-muted underline-offset-2 hover:text-ink hover:underline">
-              Back to dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+    <>
+      <SiteHeader
+        trailing={
+          user ? (
+            <span className={`hidden rounded-full border border-line px-3 py-1 sm:block ${outOfRenders ? "text-ink" : "text-muted"}`}>
+              {credits > 0
+                ? `${credits} image${credits === 1 ? "" : "s"} left`
+                : `${freeLeft} free preview${freeLeft === 1 ? "" : "s"} left`}
+            </span>
+          ) : undefined
+        }
+      />
+      <div className="mx-auto max-w-5xl px-6 pb-36">
 
       {/* Purchase confirmation */}
       {justPurchased && (
@@ -382,7 +376,8 @@ export default function StageClient() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
