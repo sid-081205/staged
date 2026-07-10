@@ -238,7 +238,7 @@ export default function StageClient() {
           ) : undefined
         }
       />
-      <div className="mx-auto max-w-5xl px-6 pb-36">
+      <div className="mx-auto max-w-5xl px-4 pb-44 sm:px-6 sm:pb-36">
 
       {/* Purchase confirmation */}
       {justPurchased && (
@@ -263,7 +263,7 @@ export default function StageClient() {
 
       {/* Upload zone */}
       <section
-        className={`mt-8 rounded-3xl border border-dashed p-10 text-center transition-all ${
+        className={`mt-8 rounded-3xl border border-dashed p-6 text-center transition-all sm:p-10 ${
           dragOver ? "scale-[1.01] border-accent bg-paper-2" : "border-line"
         }`}
         onDragOver={(e) => {
@@ -352,7 +352,7 @@ export default function StageClient() {
       {/* Buy bar */}
       {outOfRenders && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink bg-paper">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
             <div className="text-sm">
               <p>
                 <span className="font-medium">You&rsquo;re out of images.</span>{" "}
@@ -369,7 +369,7 @@ export default function StageClient() {
             <button
               onClick={buyPack}
               disabled={checkingOut}
-              className="rounded-xl border border-ink bg-ink px-6 py-3 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50"
+              className="w-full rounded-xl border border-ink bg-ink px-6 py-3 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50 sm:w-auto"
             >
               {checkingOut ? "Redirecting…" : `Buy ${PACK_CREDITS} images for ${PACK_LABEL}`}
             </button>

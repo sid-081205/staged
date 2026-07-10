@@ -66,17 +66,17 @@ export default function ListingRow({
   }
 
   return (
-    <div className="flex items-center gap-6 px-5 py-5 first:rounded-t-2xl last:rounded-b-2xl">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 first:rounded-t-2xl last:rounded-b-2xl sm:gap-6 sm:px-5 sm:py-5">
       <Link href={`/stage?job=${id}`} className="shrink-0">
         {firstPhotoId ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/api/image/${firstPhotoId}?kind=original`}
             alt=""
-            className="h-20 w-28 rounded-xl border border-line object-cover"
+            className="h-16 w-24 rounded-xl border border-line object-cover sm:h-20 sm:w-28"
           />
         ) : (
-          <div className="flex h-20 w-28 items-center justify-center rounded-xl border border-line text-xs text-muted">
+          <div className="flex h-16 w-24 items-center justify-center rounded-xl border border-line text-xs text-muted sm:h-20 sm:w-28">
             No photos
           </div>
         )}
@@ -130,7 +130,7 @@ export default function ListingRow({
       </div>
 
       {!editing && (
-        <div className="flex shrink-0 items-center gap-4 text-sm">
+        <div className="flex w-full shrink-0 items-center justify-end gap-4 text-sm sm:w-auto">
           <button
             onClick={() => setEditing(true)}
             disabled={busy}

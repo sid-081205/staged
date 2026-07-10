@@ -57,7 +57,7 @@ export default async function DashboardPage({
           </>
         }
       />
-      <div className="mx-auto max-w-5xl px-6">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
 
       {justPurchased && (
         <div className="mt-6 rounded-2xl border border-accent bg-paper-2 px-4 py-3 text-sm">
@@ -92,8 +92,8 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <div className="flex items-center justify-between py-10">
-        <h1 className="font-serif text-4xl">Your listings</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 py-8 sm:py-10">
+        <h1 className="font-serif text-3xl sm:text-4xl">Your listings</h1>
         <Link
           href="/stage"
           className="rounded-xl border border-ink bg-ink px-5 py-2.5 text-paper transition-colors hover:bg-transparent hover:text-ink"

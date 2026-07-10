@@ -63,9 +63,9 @@ export default function SignInClient() {
   return (
     <>
       <SiteHeader />
-      <div className="mx-auto max-w-5xl px-6">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
 
-      <div className="mx-auto max-w-md py-24">
+      <div className="mx-auto max-w-md py-14 md:py-24">
         <h1 className="font-serif text-4xl">Sign in</h1>
         <p className="mt-3 leading-relaxed text-muted">
           {step === "email"

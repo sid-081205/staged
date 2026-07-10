@@ -130,14 +130,14 @@ export default function Home() {
     <div>
       <SiteHeader />
 
-      <main className="mx-auto max-w-6xl px-6">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* Hero */}
-        <section className="grid gap-12 py-12 md:grid-cols-[1fr_1.1fr] md:items-center md:py-16">
+        <section className="grid gap-10 py-10 md:grid-cols-[1fr_1.1fr] md:items-center md:gap-12 md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
               Virtual Staging for Homes
             </p>
-            <h1 className="mt-4 font-serif text-5xl leading-[1.04] md:text-[4.2rem]">
+            <h1 className="mt-4 font-serif text-[2.6rem] leading-[1.04] sm:text-5xl md:text-[4.2rem]">
               Empty rooms
               <br />
               don&rsquo;t sell.
@@ -177,7 +177,7 @@ export default function Home() {
         <section className="border-t border-line py-12 md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Why stage at all</p>
-            <h2 className="mt-3 font-serif text-4xl">Buyers pay more for rooms they can picture.</h2>
+            <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Buyers pay more for rooms they can picture.</h2>
           </Reveal>
           <div className="mt-10 grid gap-8 md:grid-cols-3">
             {(
@@ -213,7 +213,7 @@ export default function Home() {
           <Reveal>
             <div className="max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">What Stagely does</p>
-              <h2 className="mt-3 font-serif text-4xl">Stage it. Clear it. Fix the light.</h2>
+              <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Stage it. Clear it. Fix the light.</h2>
               <p className="mt-4 leading-relaxed text-muted">
                 Three edits, one tool. Furnish empty rooms for a sale listing or an
                 Airbnb, remove furniture and clutter from occupied homes, or fix the
@@ -250,7 +250,7 @@ export default function Home() {
           <Reveal>
             <div className="max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">One photo, many directions</p>
-              <h2 className="mt-3 font-serif text-4xl">Match the furniture to the buyer.</h2>
+              <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Match the furniture to the buyer.</h2>
               <p className="mt-4 leading-relaxed text-muted">
                 A starter condo shows better in Scandinavian. A $2M listing needs
                 the luxury treatment. An Airbnb needs to look warm and guest ready.
@@ -269,7 +269,7 @@ export default function Home() {
         <section className="border-t border-line py-12 md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Three steps</p>
-            <h2 className="mt-3 font-serif text-4xl">Listing ready before your coffee cools.</h2>
+            <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Listing ready before your coffee cools.</h2>
           </Reveal>
           <div className="mt-10 grid gap-8 md:grid-cols-3">
             {steps.map(([title, body], i) => (
@@ -288,7 +288,7 @@ export default function Home() {
         <section className="border-t border-line py-12 md:py-16">
           <Reveal>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">The math</p>
-            <h2 className="mt-3 font-serif text-4xl">Same photos on the MLS. Very different invoice.</h2>
+            <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Same photos on the MLS. Very different invoice.</h2>
           </Reveal>
           <Reveal delay={100}>
             <div className="mt-10 overflow-x-auto">
@@ -362,7 +362,7 @@ export default function Home() {
           <div className="grid gap-10 md:grid-cols-2">
             <Reveal>
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Pricing</p>
-              <h2 className="mt-3 font-serif text-4xl">
+              <h2 className="mt-3 font-serif text-3xl sm:text-4xl">
                 {PER_IMAGE_LABEL} an image. That&rsquo;s the whole pricing page.
               </h2>
               <p className="mt-4 max-w-md leading-relaxed text-muted">
@@ -418,7 +418,7 @@ export default function Home() {
             <Reveal>
               <div className="text-center">
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">Questions</p>
-                <h2 className="mt-3 font-serif text-4xl">Asked and answered.</h2>
+                <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Asked and answered.</h2>
                 <p className="mt-4 leading-relaxed text-muted">
                   Something else?{" "}
                   <a href="mailto:stagelyhelp@gmail.com" className="text-ink underline underline-offset-4">
@@ -449,7 +449,7 @@ export default function Home() {
         {/* Final CTA */}
         <section className="border-t border-line py-12 text-center md:py-16">
           <Reveal>
-            <h2 className="mx-auto max-w-2xl font-serif text-4xl leading-tight md:text-5xl">
+            <h2 className="mx-auto max-w-2xl font-serif text-3xl leading-tight sm:text-4xl md:text-5xl">
               Your next listing has empty rooms.
               <br />
               <em className="text-accent">Fix that for {PER_IMAGE_LABEL} a photo.</em>
@@ -466,7 +466,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-line bg-paper-2">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div>
               <span className="flex items-center gap-2.5 font-serif text-3xl">
@@ -478,7 +478,7 @@ export default function Home() {
                 rooms, download furnished ones.
               </p>
             </div>
-            <div className="flex gap-16 text-sm">
+            <div className="flex flex-wrap gap-10 text-sm sm:gap-16">
               <div className="space-y-2">
                 <p className="font-medium">Product</p>
                 <a href="#styles" className="block text-muted hover:text-ink">Styles</a>
