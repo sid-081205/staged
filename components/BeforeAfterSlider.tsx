@@ -9,6 +9,7 @@ interface Props {
   afterLabel?: string;
   /** Gently sweeps the divider until the user first interacts. */
   autoplay?: boolean;
+  className?: string;
 }
 
 export default function BeforeAfterSlider({
@@ -17,6 +18,7 @@ export default function BeforeAfterSlider({
   beforeLabel = "Empty",
   afterLabel = "Staged",
   autoplay = false,
+  className = "",
 }: Props) {
   const [pos, setPos] = useState(50);
   const ref = useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ export default function BeforeAfterSlider({
   return (
     <div
       ref={ref}
-      className="relative aspect-[4/3] w-full cursor-ew-resize select-none overflow-hidden rounded-2xl border border-line"
+      className={`relative aspect-[4/3] w-full cursor-ew-resize select-none overflow-hidden rounded-2xl border border-line ${className}`}
       onPointerDown={(e) => {
         dragging.current = true;
         (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -70,9 +72,9 @@ export default function BeforeAfterSlider({
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0" style={{ left: `${pos}%` }}>
-        <div className="absolute inset-y-0 -ml-px w-0.5 bg-paper" />
-        <div className="absolute top-1/2 -ml-4 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-paper text-xs text-ink">
+      <div className="pointer-events-none absolute inset-y-0 z-10" style={{ left: `${pos}%` }}>
+        <div className="absolute inset-y-0 -ml-px w-0.5 bg-white shadow-[0_0_0_1px_rgba(28,25,23,0.2)]" />
+        <div className="absolute top-1/2 -ml-4 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-paper text-xs text-ink shadow-sm">
           ↔
         </div>
       </div>

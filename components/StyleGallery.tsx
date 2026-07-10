@@ -5,7 +5,7 @@ import { useState } from "react";
 const LOOKS = [
   { key: "modern", label: "Modern", src: "/demo/after.jpg", note: "Clean lines, neutral palette. The safe default for most listings." },
   { key: "scandinavian", label: "Scandinavian", src: "/demo/scandinavian.jpg", note: "Light oak and oatmeal textiles. Makes small rooms feel airy." },
-  { key: "midcentury", label: "Mid-century", src: "/demo/midcentury.jpg", note: "Walnut, tapered legs, warm accents. Character without clutter." },
+  { key: "midcentury", label: "Midcentury", src: "/demo/midcentury.jpg", note: "Walnut, tapered legs, warm accents. Character without clutter." },
   { key: "luxury", label: "Luxury", src: "/demo/luxury.jpg", note: "Velvet, marble, brass. For listings priced to impress." },
 ];
 

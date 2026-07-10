@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function SignInClient() {
   const [email, setEmail] = useState("");
@@ -60,21 +61,15 @@ export default function SignInClient() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6">
-      <header className="flex items-center justify-between border-b border-line py-5">
-        <Link href="/" className="font-serif text-2xl">
-          Staged.
-        </Link>
-        <Link href="/" className="text-sm text-muted hover:text-ink">
-          Back to home
-        </Link>
-      </header>
+    <>
+      <SiteHeader />
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
 
-      <div className="mx-auto max-w-md py-24">
+      <div className="mx-auto max-w-md py-14 md:py-24">
         <h1 className="font-serif text-4xl">Sign in</h1>
         <p className="mt-3 leading-relaxed text-muted">
           {step === "email"
-            ? "Enter your email and we'll send a 6-digit code. No passwords — your images and credits stay on your account."
+            ? "Enter your email and we'll send a 6 digit code. No passwords. Your images and credits stay on your account."
             : `We emailed a 6-digit code to ${email}. It expires in 10 minutes.`}
         </p>
 
@@ -121,7 +116,7 @@ export default function SignInClient() {
             </button>
             {devCode && (
               <p className="rounded-xl border border-line bg-paper-2 px-4 py-3 text-sm text-muted">
-                Dev mode (no email key set) — your code is <span className="font-medium text-ink">{devCode}</span>
+                Dev mode (no email key set). Your code is <span className="font-medium text-ink">{devCode}</span>
               </p>
             )}
             <div className="flex items-center justify-between text-sm text-muted">
@@ -137,6 +132,7 @@ export default function SignInClient() {
 
         {error && <p className="mt-4 rounded-xl border border-ink/20 bg-paper-2 px-4 py-3 text-sm">{error}</p>}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

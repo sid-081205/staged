@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import "./globals.css";
+import RenderTracker from "@/components/RenderTracker";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const newsreader = Newsreader({
@@ -12,22 +13,22 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
   title: {
-    default: "Staged — virtual staging for real estate listings",
-    template: "%s — Staged",
+    default: "Stagely | Virtual staging for real estate listings",
+    template: "%s | Stagely",
   },
   description:
-    "Upload photos of empty rooms. Download them professionally furnished in about 30 seconds. $19 per listing, no subscription. Includes declutter and photo-enhancement modes.",
+    "Upload photos of empty rooms. Download them professionally furnished minutes later. $3 for 10 images, no subscription. Stage for sale listings or Airbnb, remove furniture, or fix the lighting.",
   openGraph: {
-    title: "Staged — empty rooms don't sell",
+    title: "Stagely | Empty rooms don't sell",
     description:
-      "AI virtual staging for real estate listings. $19 per listing, renders in 30 seconds, free previews.",
+      "AI virtual staging for real estate listings and Airbnbs. $3 for 10 images, renders in minutes, free preview.",
     images: ["/demo/after.jpg"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Staged — empty rooms don't sell",
-    description: "AI virtual staging for real estate listings. $19 per listing, free previews.",
+    title: "Stagely | Empty rooms don't sell",
+    description: "AI virtual staging for real estate listings and Airbnbs. $3 for 10 images, free preview.",
     images: ["/demo/after.jpg"],
   },
 };
@@ -35,7 +36,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${newsreader.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <RenderTracker />
+      </body>
     </html>
   );
 }

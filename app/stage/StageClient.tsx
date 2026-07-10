@@ -3,16 +3,23 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import SiteHeader from "@/components/SiteHeader";
 import {
   FREE_PREVIEWS,
+  MAX_EXTRA_PROMPT,
   MAX_PHOTOS,
   PACK_CREDITS,
   PACK_LABEL,
+  modeLabel,
   ROOM_TYPES,
+  SERVICES,
+  STYLE_GROUPS,
   STYLES,
   RoomKey,
+  ServiceKey,
   StyleKey,
 } from "@/lib/config";
+import { addTracked, removeTracked } from "@/lib/renderTracker";
 
 interface RenderInfo {
   id: string;
@@ -26,6 +33,7 @@ interface RenderInfo {
 
 interface JobState {
   id: string;
+  name?: string | null;
   photos: { id: string }[];
   renders: RenderInfo[];
 }
@@ -46,7 +54,7 @@ export default function StageClient() {
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [withLabel, setWithLabel] = useState(false);
-  const [busyPhotos, setBusyPhotos] = useState<Record<string, boolean>>({});
+  const [reviewId, setReviewId] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [justPurchased, setJustPurchased] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -84,8 +92,14 @@ export default function StageClient() {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("session_id");
     const urlJob = params.get("job");
+    const review = params.get("review");
     const storedJob = localStorage.getItem(JOB_KEY);
     const jobId = urlJob || storedJob;
+    if (review) {
+      setReviewId(review);
+      // Drop the review param so a refresh doesn't reopen the modal.
+      window.history.replaceState({}, "", jobId ? `/stage?job=${jobId}` : "/stage");
+    }
 
     (async () => {
       if (sessionId) {
@@ -102,6 +116,27 @@ export default function StageClient() {
       if (jobId) await refresh(jobId);
     })();
   }, [refresh, refreshUser]);
+
+  // Keep polling while any render is still processing, so results appear here
+  // as the background work finishes.
+  useEffect(() => {
+    if (!job || !job.renders.some((r) => r.status === "processing")) return;
+    const id = job.id;
+    const t = setInterval(() => {
+      refresh(id);
+      refreshUser();
+    }, 3000);
+    return () => clearInterval(t);
+  }, [job, refresh, refreshUser]);
+
+  // Once a render is visible here (done or failed), drop it from the global
+  // progress popup — the user is already looking at this listing.
+  useEffect(() => {
+    if (!job) return;
+    for (const r of job.renders) {
+      if (r.status === "done" || r.status === "failed") removeTracked(r.id);
+    }
+  }, [job]);
 
   async function upload(files: FileList | File[]) {
     const list = Array.from(files).filter((f) => f.type.startsWith("image/") || f.name.match(/\.(heic|heif)$/i));
@@ -128,28 +163,20 @@ export default function StageClient() {
     }
   }
 
-  async function useSamplePhoto() {
-    setUploading(true);
-    setError(null);
-    try {
-      const blob = await fetch("/demo/before.jpg").then((r) => r.blob());
-      await upload([new File([blob], "sample-living-room.jpg", { type: "image/jpeg" })]);
-    } catch {
-      showError("Could not load the sample photo.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function generate(photoId: string, style: StyleKey, roomType: RoomKey) {
+  async function generate(
+    photoId: string,
+    service: ServiceKey,
+    style: StyleKey,
+    roomType: RoomKey,
+    extraPrompt: string
+  ) {
     if (!job) return;
     setError(null);
-    setBusyPhotos((b) => ({ ...b, [photoId]: true }));
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoId, style, roomType }),
+        body: JSON.stringify({ photoId, service, style, roomType, extraPrompt }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -159,11 +186,18 @@ export default function StageClient() {
         }
         throw new Error(data.error ?? "Generation failed.");
       }
+      // Track in the global progress widget so it survives navigation.
+      addTracked({
+        id: data.id,
+        jobId: data.jobId ?? job.id,
+        style: data.style,
+        roomType: data.roomType,
+        status: "processing",
+        startedAt: Date.now(),
+      });
       await Promise.all([refresh(job.id), refreshUser()]);
     } catch (e) {
       showError(e instanceof Error ? e.message : "Generation failed.");
-    } finally {
-      setBusyPhotos((b) => ({ ...b, [photoId]: false }));
     }
   }
 
@@ -186,51 +220,25 @@ export default function StageClient() {
     }
   }
 
-  function resetListing() {
-    localStorage.removeItem(JOB_KEY);
-    window.history.replaceState({}, "", "/stage");
-    setJob(null);
-    setError(null);
-  }
-
   const credits = user?.credits ?? 0;
   const freeLeft = user?.freeLeft ?? FREE_PREVIEWS;
   const outOfRenders = credits <= 0 && freeLeft <= 0;
   const onFreePreviews = credits <= 0 && freeLeft > 0;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pb-36">
-      <header className="sticky top-0 z-40 -mx-6 border-b border-line bg-paper/85 px-6 backdrop-blur-sm">
-        <div className="flex items-center justify-between py-4">
-          <Link href="/" className="font-serif text-2xl">
-            Staged.
-          </Link>
-          <div className="flex items-center gap-5 text-sm">
-            {user && (
-              <span className={`hidden rounded-full border border-line px-3 py-1 sm:block ${outOfRenders ? "text-ink" : "text-muted"}`}>
-                {credits > 0
-                  ? `${credits} image${credits === 1 ? "" : "s"} left`
-                  : `${freeLeft} free preview${freeLeft === 1 ? "" : "s"} left`}
-              </span>
-            )}
-            <button
-              onClick={buyPack}
-              disabled={checkingOut}
-              className="hidden text-muted underline-offset-2 hover:text-ink hover:underline disabled:opacity-50 sm:block"
-            >
-              Buy {PACK_CREDITS} images — {PACK_LABEL}
-            </button>
-            {job && (
-              <button onClick={resetListing} className="text-muted underline-offset-2 hover:text-ink hover:underline">
-                New listing
-              </button>
-            )}
-            <Link href="/dashboard" className="text-muted underline-offset-2 hover:text-ink hover:underline">
-              Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+    <>
+      <SiteHeader
+        trailing={
+          user ? (
+            <span className={`hidden rounded-full border border-line px-3 py-1 sm:block ${outOfRenders ? "text-ink" : "text-muted"}`}>
+              {credits > 0
+                ? `${credits} image${credits === 1 ? "" : "s"} left`
+                : `${freeLeft} free preview${freeLeft === 1 ? "" : "s"} left`}
+            </span>
+          ) : undefined
+        }
+      />
+      <div className="mx-auto max-w-5xl px-4 pb-44 sm:px-6 sm:pb-36">
 
       {/* Purchase confirmation */}
       {justPurchased && (
@@ -238,7 +246,7 @@ export default function StageClient() {
           <p>
             <span className="font-medium text-accent">Pack added.</span>{" "}
             <span className="text-muted">
-              {PACK_CREDITS} images on your account — renders are now clean, full resolution, and downloadable.
+              {PACK_CREDITS} images on your account. Renders are now clean, full resolution, and downloadable.
             </span>
           </p>
           <span className="text-xs uppercase tracking-widest text-muted">Payment received</span>
@@ -248,14 +256,14 @@ export default function StageClient() {
       {/* Free-preview notice */}
       {!justPurchased && onFreePreviews && (
         <div className="mt-6 rounded-2xl border border-line bg-paper-2 px-4 py-3 text-sm text-muted">
-          You&rsquo;re on free previews — watermarked, {freeLeft} left. Buy {PACK_CREDITS} images for {PACK_LABEL} to
-          get clean full-resolution downloads.
+          You&rsquo;re on your free preview (watermarked, {freeLeft} left). Buy {PACK_CREDITS} images for {PACK_LABEL} to
+          get clean full resolution downloads.
         </div>
       )}
 
       {/* Upload zone */}
       <section
-        className={`mt-8 rounded-3xl border border-dashed p-10 text-center transition-all ${
+        className={`mt-8 rounded-3xl border border-dashed p-6 text-center transition-all sm:p-10 ${
           dragOver ? "scale-[1.01] border-accent bg-paper-2" : "border-line"
         }`}
         onDragOver={(e) => {
@@ -281,15 +289,6 @@ export default function StageClient() {
           >
             {uploading ? "Uploading…" : "Choose photos"}
           </button>
-          {!job && (
-            <button
-              onClick={useSamplePhoto}
-              disabled={uploading}
-              className="rounded-xl border border-line px-5 py-2.5 text-muted transition-colors hover:border-ink hover:text-ink disabled:opacity-50"
-            >
-              No photo handy? Try our sample room
-            </button>
-          )}
         </div>
         <input
           ref={fileInput}
@@ -335,9 +334,9 @@ export default function StageClient() {
           key={photo.id}
           photoId={photo.id}
           withLabel={withLabel}
-          busy={!!busyPhotos[photo.id]}
           disabled={outOfRenders}
-          renders={job.renders.filter((r) => r.photoId === photo.id && r.status === "done")}
+          autoReviewId={reviewId}
+          renders={job.renders.filter((r) => r.photoId === photo.id)}
           onGenerate={generate}
         />
       ))}
@@ -345,62 +344,109 @@ export default function StageClient() {
       {/* First-visit hint */}
       {!job && (
         <p className="mt-8 text-center text-sm text-muted">
-          Every account starts with {FREE_PREVIEWS} free watermarked previews. Packs are {PACK_LABEL} for{" "}
-          {PACK_CREDITS} clean full-resolution images.
+          Every account starts with {FREE_PREVIEWS} free watermarked preview. Packs are {PACK_LABEL} for{" "}
+          {PACK_CREDITS} clean full resolution images.
         </p>
       )}
 
       {/* Buy bar */}
       {outOfRenders && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink bg-paper">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
             <div className="text-sm">
               <p>
                 <span className="font-medium">You&rsquo;re out of images.</span>{" "}
                 <span className="text-muted">
-                  {PACK_LABEL} adds {PACK_CREDITS} more — clean, full resolution, any mode. Credits never expire.
+                  {PACK_LABEL} adds {PACK_CREDITS} more, clean and full resolution, for any edit. Credits never expire.
                 </span>
               </p>
               {IS_TEST_MODE && (
                 <p className="mt-1 text-xs text-accent">
-                  Test mode — pay with card 4242 4242 4242 4242, any future expiry, any CVC.
+                  Test mode: pay with card 4242 4242 4242 4242, any future expiry, any CVC.
                 </p>
               )}
             </div>
             <button
               onClick={buyPack}
               disabled={checkingOut}
-              className="rounded-xl border border-ink bg-ink px-6 py-3 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50"
+              className="w-full rounded-xl border border-ink bg-ink px-6 py-3 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50 sm:w-auto"
             >
-              {checkingOut ? "Redirecting…" : `Buy ${PACK_CREDITS} images — ${PACK_LABEL}`}
+              {checkingOut ? "Redirecting…" : `Buy ${PACK_CREDITS} images for ${PACK_LABEL}`}
             </button>
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
 function PhotoCard({
   photoId,
   withLabel,
-  busy,
   disabled,
+  autoReviewId,
   renders,
   onGenerate,
 }: {
   photoId: string;
   withLabel: boolean;
-  busy: boolean;
   disabled: boolean;
+  autoReviewId: string | null;
   renders: RenderInfo[];
-  onGenerate: (photoId: string, style: StyleKey, roomType: RoomKey) => void;
+  onGenerate: (
+    photoId: string,
+    service: ServiceKey,
+    style: StyleKey,
+    roomType: RoomKey,
+    extraPrompt: string
+  ) => Promise<void>;
 }) {
+  const [service, setService] = useState<ServiceKey>("stage");
   const [style, setStyle] = useState<StyleKey>("modern");
   const [room, setRoom] = useState<RoomKey>("living");
+  const [extra, setExtra] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [compare, setCompare] = useState<RenderInfo | null>(null);
+  // The review id must open the modal exactly once. Without this guard the
+  // effect re-fires on every poll refresh (renders is a fresh array each
+  // time) and reopens the modal right after the user closes it.
+  const consumedReview = useRef<string | null>(null);
 
-  const isUtility = style === "declutter" || style === "enhance";
+  const done = renders.filter((r) => r.status === "done");
+  const processing = renders.filter((r) => r.status === "processing");
+  const failed = renders.filter((r) => r.status === "failed");
+  const busy = submitting || processing.length > 0;
+  const staging = service === "stage";
+
+  // Auto-open the compare view when arriving from the progress widget's Review.
+  useEffect(() => {
+    if (!autoReviewId || consumedReview.current === autoReviewId) return;
+    const match = done.find((r) => r.id === autoReviewId);
+    if (match) {
+      consumedReview.current = autoReviewId;
+      setCompare(match);
+    }
+  }, [autoReviewId, done]);
+
+  async function submit() {
+    setSubmitting(true);
+    try {
+      await onGenerate(photoId, service, style, room, extra.trim());
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const buttonLabel = busy
+    ? "Working, runs in the background"
+    : service === "declutter"
+    ? "Empty this room"
+    : service === "enhance"
+    ? "Enhance this photo"
+    : done.length > 0
+    ? "Stage again"
+    : "Stage this room";
 
   return (
     <section className="mt-10 overflow-hidden rounded-3xl border border-line">
@@ -413,48 +459,87 @@ function PhotoCard({
             className="aspect-[4/3] w-full object-cover"
           />
           <div className="space-y-3 p-4">
+            <label className="block text-sm">
+              <span className="text-muted">What do you need?</span>
+              <select
+                value={service}
+                onChange={(e) => setService(e.target.value as ServiceKey)}
+                className="mt-1 w-full cursor-pointer rounded-xl border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
+              >
+                {Object.entries(SERVICES).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-muted">{SERVICES[service].description}</span>
+            </label>
             <Select
-              label="Room"
+              label="Room type"
               value={room}
               onChange={(v) => setRoom(v as RoomKey)}
               options={Object.entries(ROOM_TYPES).map(([k, v]) => [k, v])}
             />
-            <Select
-              label="Mode"
-              value={style}
-              onChange={(v) => setStyle(v as StyleKey)}
-              options={Object.entries(STYLES).map(([k, v]) => [k, v.label])}
-            />
+            {staging && (
+              <label className="block text-sm">
+                <span className="text-muted">Furniture style</span>
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value as StyleKey)}
+                  className="mt-1 w-full cursor-pointer rounded-xl border border-line bg-paper px-3 py-2 outline-none focus:border-ink"
+                >
+                  {STYLE_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.keys.map((k) => (
+                        <option key={k} value={k}>
+                          {STYLES[k].label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="block text-sm">
+              <span className="text-muted">Anything specific? (optional)</span>
+              <textarea
+                value={extra}
+                maxLength={MAX_EXTRA_PROMPT}
+                onChange={(e) => setExtra(e.target.value)}
+                rows={2}
+                placeholder={
+                  staging
+                    ? "e.g. add a grand piano, warmer tones, a large plant"
+                    : "e.g. keep the curtains, brighter evening light"
+                }
+                className="mt-1 w-full resize-y rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none placeholder:text-muted/60 focus:border-ink"
+              />
+              <span className="mt-1 block text-right text-[11px] text-muted">
+                {extra.length}/{MAX_EXTRA_PROMPT}
+              </span>
+            </label>
             <button
-              onClick={() => onGenerate(photoId, style, room)}
+              onClick={submit}
               disabled={busy || disabled}
               className="w-full rounded-xl border border-ink bg-ink px-4 py-2.5 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50"
             >
-              {busy
-                ? "Working… 1–3 min"
-                : isUtility
-                ? style === "declutter"
-                  ? "Empty this room"
-                  : "Enhance this photo"
-                : renders.length > 0
-                ? "Stage again"
-                : "Stage this room"}
+              {buttonLabel}
             </button>
             {disabled && !busy && (
-              <p className="text-xs text-muted">Out of images — buy a pack below to continue.</p>
+              <p className="text-xs text-muted">Out of images. Buy a pack below to continue.</p>
             )}
           </div>
         </div>
 
         <div className="p-4">
-          {renders.length === 0 && !busy && (
+          {done.length === 0 && processing.length === 0 && failed.length === 0 && (
             <div className="flex h-full min-h-40 flex-col items-center justify-center gap-1 text-center text-sm text-muted">
               <p>Renders appear here.</p>
-              <p className="text-xs">Pick a mode and hit the button — compare results side by side after.</p>
+              <p className="text-xs">Pick an edit, hit the button, then compare results side by side.</p>
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {renders.map((r) => (
+            {done.map((r) => (
               <figure key={r.id} className="group overflow-hidden rounded-2xl border border-line">
                 <button className="relative block w-full cursor-zoom-in" onClick={() => setCompare(r)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -469,8 +554,7 @@ function PhotoCard({
                 </button>
                 <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                   <span className="truncate text-muted">
-                    {STYLES[r.style as StyleKey]?.label.split(" (")[0] ?? r.style} ·{" "}
-                    {ROOM_TYPES[r.roomType as RoomKey] ?? r.roomType}
+                    {modeLabel(r.style)} · {ROOM_TYPES[r.roomType as RoomKey] ?? r.roomType}
                   </span>
                   {r.paid ? (
                     <a
@@ -485,16 +569,22 @@ function PhotoCard({
                 </figcaption>
               </figure>
             ))}
-            {busy && (
-              <div className="overflow-hidden rounded-2xl border border-line">
+            {processing.map((r) => (
+              <div key={r.id} className="overflow-hidden rounded-2xl border border-line">
                 <div className="flex aspect-[4/3] w-full animate-pulse items-center justify-center bg-paper-2">
-                  <span className="text-sm text-muted">Furnishing…</span>
+                  <span className="text-sm text-muted">Working…</span>
                 </div>
-                <div className="px-3 py-2">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-paper-2" />
+                <div className="px-3 py-2 text-xs text-muted">
+                  {modeLabel(r.style)} · runs in background
                 </div>
               </div>
-            )}
+            ))}
+            {failed.map((r) => (
+              <div key={r.id} className="overflow-hidden rounded-2xl border border-line bg-paper-2 p-3 text-sm">
+                <p className="font-medium">Render failed</p>
+                <p className="mt-1 text-xs text-muted">{r.error ?? "Try again. You weren't charged."}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -508,9 +598,7 @@ function PhotoCard({
           <div className="w-full max-w-3xl rounded-3xl border border-ink bg-paper p-4" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm">
-                <span className="font-medium">
-                  {STYLES[compare.style as StyleKey]?.label.split(" (")[0] ?? compare.style}
-                </span>{" "}
+                <span className="font-medium">{modeLabel(compare.style)}</span>{" "}
                 <span className="text-muted">· drag the divider</span>
               </p>
               <button onClick={() => setCompare(null)} className="text-muted hover:text-ink">

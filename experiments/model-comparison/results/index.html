@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>Staged model comparison</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:24px;background:#faf7f0;color:#1c1917}
+  h1{font-size:22px} p{color:#57534e}
+  table{border-collapse:collapse;margin-top:16px}
+  th,td{border:1px solid #e7e5e4;padding:8px;vertical-align:top;text-align:center}
+  th{background:#fff;font-size:13px}
+  img{width:340px;height:auto;display:block;border-radius:8px}
+  .input img{width:340px}
+  td.fail{color:#b91c1c;font-size:12px;max-width:340px}
+  small{color:#78716c;font-weight:400}
+</style>
+<h1>Staged model comparison</h1>
+<p>Input photo: <code>public/demo/before.jpg</code>. Each row is one model; each column is one prompt. Click an image to open full size.</p>
+<div class="input"><strong>Input</strong><br><img src="input.jpg"></div>
+<table>
+  <tr><th>model \ prompt</th><th>Home gym with a piano, farmhouse style</th><th>Scandinavian living room staging</th></tr>
+  <tr><th>composer-2.5<br><small>692s total</small></th><td><a href="composer-2.5/gym-piano-farmhouse.jpg" target="_blank"><img src="composer-2.5/gym-piano-farmhouse.jpg"></a></td><td><a href="composer-2.5/scandinavian-living-room.jpg" target="_blank"><img src="composer-2.5/scandinavian-living-room.jpg"></a></td></tr>
+<tr><th>gpt-5.6-sol<br><small>141s total</small></th><td><a href="gpt-5.6-sol/gym-piano-farmhouse.jpg" target="_blank"><img src="gpt-5.6-sol/gym-piano-farmhouse.jpg"></a></td><td><a href="gpt-5.6-sol/scandinavian-living-room.jpg" target="_blank"><img src="gpt-5.6-sol/scandinavian-living-room.jpg"></a></td></tr>
+<tr><th>gemini-3.1-pro<br><small>410s total</small></th><td><a href="gemini-3.1-pro/gym-piano-farmhouse.jpg" target="_blank"><img src="gemini-3.1-pro/gym-piano-farmhouse.jpg"></a></td><td><a href="gemini-3.1-pro/scandinavian-living-room.jpg" target="_blank"><img src="gemini-3.1-pro/scandinavian-living-room.jpg"></a></td></tr>
+<tr><th>claude-opus-4-8<br><small>316s total</small></th><td><a href="claude-opus-4-8/gym-piano-farmhouse.jpg" target="_blank"><img src="claude-opus-4-8/gym-piano-farmhouse.jpg"></a></td><td><a href="claude-opus-4-8/scandinavian-living-room.jpg" target="_blank"><img src="claude-opus-4-8/scandinavian-living-room.jpg"></a></td></tr>
+</table>

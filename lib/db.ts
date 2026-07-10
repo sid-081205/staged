@@ -23,7 +23,8 @@ function open(): Database.Database {
       created_at INTEGER NOT NULL,
       paid INTEGER NOT NULL DEFAULT 0,
       stripe_session_id TEXT,
-      user_id TEXT
+      user_id TEXT,
+      name TEXT
     );
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -89,6 +90,10 @@ function open(): Database.Database {
     // Renders that belonged to unlocked listings under the old model stay clean.
     db.exec("UPDATE renders SET paid = 1 WHERE job_id IN (SELECT id FROM jobs WHERE paid = 1)");
   }
+  const jobCols = db.prepare("PRAGMA table_info(jobs)").all() as { name: string }[];
+  if (!jobCols.some((c) => c.name === "name")) {
+    db.exec("ALTER TABLE jobs ADD COLUMN name TEXT");
+  }
   return db;
 }
 
@@ -101,6 +106,7 @@ export interface Job {
   paid: number;
   stripe_session_id: string | null;
   user_id: string | null;
+  name: string | null;
 }
 
 export interface User {
@@ -124,7 +130,7 @@ export interface Render {
   photo_id: string;
   style: string;
   room_type: string;
-  status: "done" | "failed";
+  status: "processing" | "done" | "failed";
   output_path: string | null;
   error: string | null;
   paid: number;
@@ -185,6 +191,7 @@ export function jobState(jobId: string) {
   if (!job) return null;
   return {
     id: job.id,
+    name: job.name,
     userId: job.user_id,
     photos: jobPhotos(jobId).map((p) => ({ id: p.id })),
     renders: jobRenders(jobId).map((r) => ({
@@ -197,4 +204,54 @@ export function jobState(jobId: string) {
       paid: r.paid === 1,
     })),
   };
+}
+
+/** Renames a listing. Pass an empty/blank name to clear it (falls back to date label). */
+export function renameJob(jobId: string, name: string): void {
+  const clean = name.trim().slice(0, 80);
+  db.prepare("UPDATE jobs SET name = ? WHERE id = ?").run(clean.length > 0 ? clean : null, jobId);
+}
+
+/** Deletes a listing and every photo + render it owns, including the files on disk. */
+export function deleteJob(jobId: string): void {
+  const renders = db.prepare("SELECT output_path FROM renders WHERE job_id = ?").all(jobId) as {
+    output_path: string | null;
+  }[];
+  const photos = db.prepare("SELECT original_path FROM photos WHERE job_id = ?").all(jobId) as {
+    original_path: string | null;
+  }[];
+  for (const r of renders) if (r.output_path) fs.rmSync(r.output_path, { force: true });
+  for (const p of photos) if (p.original_path) fs.rmSync(p.original_path, { force: true });
+
+  const tx = db.transaction(() => {
+    db.prepare("DELETE FROM renders WHERE job_id = ?").run(jobId);
+    db.prepare("DELETE FROM photos WHERE job_id = ?").run(jobId);
+    db.prepare("DELETE FROM jobs WHERE id = ?").run(jobId);
+  });
+  tx();
+}
+
+/**
+ * Looks up renders by id but only returns the ones owned by `userId`. Powers
+ * the background-progress widget's status polling.
+ */
+export function rendersForUser(ids: string[], userId: string): Render[] {
+  if (ids.length === 0) return [];
+  const placeholders = ids.map(() => "?").join(",");
+  return db
+    .prepare(
+      `SELECT r.* FROM renders r JOIN jobs j ON j.id = r.job_id
+       WHERE r.id IN (${placeholders}) AND j.user_id = ?`
+    )
+    .all(...ids, userId) as Render[];
+}
+
+/** All renders still processing for a user (used to resume progress after a reload). */
+export function activeRendersForUser(userId: string): Render[] {
+  return db
+    .prepare(
+      `SELECT r.* FROM renders r JOIN jobs j ON j.id = r.job_id
+       WHERE j.user_id = ? AND r.status = 'processing' ORDER BY r.created_at`
+    )
+    .all(userId) as Render[];
 }

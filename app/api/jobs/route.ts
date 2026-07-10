@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
+import { normalizeToJpeg } from "@/lib/decodeImage";
 import { db, getJob, jobPhotos, jobState, UPLOADS_DIR } from "@/lib/db";
 import { MAX_PHOTOS, MAX_UPLOAD_BYTES } from "@/lib/config";
 import { currentUser } from "@/lib/auth";
@@ -64,14 +64,18 @@ export async function POST(req: NextRequest) {
     }
     const bytes = Buffer.from(await file.arrayBuffer());
     try {
-      // Normalizes orientation and validates that the file is a real image.
-      const normalized = await sharp(bytes).rotate().jpeg({ quality: 95 }).toBuffer();
+      // Converts HEIC when needed, normalizes orientation, and validates that
+      // the file is a real image.
+      const normalized = await normalizeToJpeg(bytes);
       const photoId = nanoid(12);
       const filePath = path.join(UPLOADS_DIR, `${photoId}.jpg`);
       fs.writeFileSync(filePath, normalized);
       insert.run(photoId, jobId, filePath, Date.now());
     } catch {
-      return NextResponse.json({ error: `${file.name} is not a readable image.` }, { status: 400 });
+      return NextResponse.json(
+        { error: `We couldn't read ${file.name}. Please upload a JPG, PNG, WEBP or HEIC photo.` },
+        { status: 400 }
+      );
     }
   }
 
