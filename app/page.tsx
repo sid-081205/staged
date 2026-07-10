@@ -112,7 +112,7 @@ const offerings: {
 ];
 
 const comparison: [string, string, string, string][] = [
-  ["Cost for 8 photos", "$2.40", "$240", "$1,500 median per home"],
+  [`Cost for ${PACK_CREDITS} photos`, PACK_LABEL, "$300", "$1,500 median per home"],
   ["Turnaround", "Minutes", "Up to 48 hours", "Days, plus a 30 to 90 day furniture rental"],
   ["Revisions", `${PER_IMAGE_LABEL} per render`, "Free within 2 months", "Restage"],
   ["Styles to compare", `${FURNITURE_STYLE_COUNT} per photo`, "9 styles, 1 per order", "1"],
@@ -289,22 +289,31 @@ export default function Home() {
           </Reveal>
           <Reveal delay={100}>
             <div className="mt-10 overflow-x-auto">
-              <table className="w-full min-w-[640px] overflow-hidden rounded-2xl border border-line text-left text-[15px]">
+              <table className="w-full min-w-[720px] table-fixed overflow-hidden rounded-2xl border border-line text-left text-[15px]">
+                <colgroup>
+                  <col className="w-[26%]" />
+                  <col className="w-[24%]" />
+                  <col className="w-[25%]" />
+                  <col className="w-[25%]" />
+                </colgroup>
                 <thead>
-                  <tr className="border-b border-line bg-paper-2">
-                    <th className="px-4 py-3 font-medium text-muted"> </th>
-                    <th className="px-4 py-3 font-serif text-lg">Staged.</th>
-                    <th className="px-4 py-3 font-medium text-muted">BoxBrownie (human editors)</th>
-                    <th className="px-4 py-3 font-medium text-muted">Physical staging</th>
+                  <tr className="border-b border-line bg-paper-2 align-top">
+                    <th className="px-4 py-4 font-medium text-muted" />
+                    <th className="px-4 py-4 font-serif text-lg">Staged.</th>
+                    <th className="px-4 py-4 font-medium text-muted">
+                      BoxBrownie
+                      <span className="mt-0.5 block text-xs font-normal leading-snug">(human editors)</span>
+                    </th>
+                    <th className="px-4 py-4 font-medium text-muted">Physical staging</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.map(([label, us, virtual, physical]) => (
-                    <tr key={label} className="border-b border-line last:border-b-0">
-                      <td className="px-4 py-3 text-muted">{label}</td>
-                      <td className="px-4 py-3 font-medium">{us}</td>
-                      <td className="px-4 py-3 text-muted">{virtual}</td>
-                      <td className="px-4 py-3 text-muted">{physical}</td>
+                    <tr key={label} className="border-b border-line align-top last:border-b-0">
+                      <td className="px-4 py-4 text-muted">{label}</td>
+                      <td className="px-4 py-4 font-medium">{us}</td>
+                      <td className="px-4 py-4 text-muted">{virtual}</td>
+                      <td className="px-4 py-4 text-muted">{physical}</td>
                     </tr>
                   ))}
                 </tbody>
