@@ -1,0 +1,6 @@
+{
+  "_comment": "Models to try in the prompt lab. Keep this short — each prompt x model is a full agent run. Run `node ../model-comparison/run.mjs --list` for ids.",
+  "models": [
+    { "id": "composer-2.5" }
+  ]
+}
