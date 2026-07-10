@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#faf7f0"/>
+  <!-- Roof -->
+  <path d="M8 30 L32 8 L56 30" fill="none" stroke="#1c1917" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Left wall -->
+  <path d="M14 32 L15.5 54 H26 L25 52 H17.5 L16.5 32 Z" fill="#1c1917"/>
+  <!-- Right wall -->
+  <path d="M50 32 L48.5 54 H38 L39 52 H46.5 L47.5 32 Z" fill="#1c1917"/>
+  <!-- Open door (brand green) -->
+  <path d="M27 28 H41 L37.5 32 H33.5 V54 L27 58 Z" fill="#2d5a42"/>
+</svg>

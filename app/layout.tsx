@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   description:
     "Upload photos of empty rooms. Download them professionally furnished minutes later. $3 for 10 images, no subscription. Stage for sale listings or Airbnb, remove furniture, or fix the lighting.",
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    icon: [{ url: "/favicon.svg?v=2", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg?v=2",
+    apple: "/favicon.svg?v=2",
   },
   openGraph: {
     title: "Stagely | Empty rooms don't sell",
