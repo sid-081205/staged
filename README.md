@@ -214,7 +214,7 @@ To ship an update: `su - staged -c "cd app && git pull && npm ci && npm run buil
 - [x] Domain: `stagely.org`, set `SITE_URL=https://stagely.org`
 - [ ] Swap Stripe test keys for live keys + make one real purchase
 - [ ] Stripe webhook endpoint `https://stagely.org/api/webhooks/stripe` + `STRIPE_WEBHOOK_SECRET`
-- [x] Contact email is `hello@stagely.org`
+- [x] Contact email is `stagelyhelp@gmail.com`
 - [ ] Keep an eye on Cursor API usage/credits — each render is an agent run
 - [ ] Post before/afters in realtor Facebook groups / r/realtors — sell the
       $30/photo vs 30¢/image comparison
