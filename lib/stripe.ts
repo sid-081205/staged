@@ -7,5 +7,5 @@ export function getStripe(): Stripe | null {
 }
 
 export function siteUrl(): string {
-  return (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.SITE_URL || "https://stagely.org").replace(/\/$/, "");
 }

@@ -11,7 +11,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.SITE_URL || "https://stagely.org"),
   title: {
     default: "Stagely | Virtual staging for real estate listings",
     template: "%s | Stagely",

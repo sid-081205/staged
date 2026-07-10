@@ -89,8 +89,8 @@ Fill in `.env`:
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Matching publishable key. |
 | `STRIPE_WEBHOOK_SECRET` | From `stripe listen` (dev) or a dashboard webhook endpoint pointed at `/api/webhooks/stripe`. Optional — redirect-time verification works without it — but recommended in production. |
 | `RESEND_API_KEY` | [Resend](https://resend.com) key for sign-in code emails (free tier: 3,000/month). If unset in dev, the code is shown on the sign-in page instead. |
-| `EMAIL_FROM` | Sender, e.g. `Staged <signin@yourdomain.com>`. The default `onboarding@resend.dev` only delivers to the Resend account owner until you verify a domain. |
-| `SITE_URL` | Public URL, used for Stripe redirects. |
+| `EMAIL_FROM` | Sender, e.g. `Stagely <hello@stagely.org>`. Requires a verified Resend domain. |
+| `SITE_URL` | Public URL for Stripe redirects. Production: `https://stagely.org`. Local: `http://localhost:3000`. |
 | `MOCK_GENERATION` | Set to `1` to fake renders (tinted copy, no agent credits used). |
 
 No other services required. State is a SQLite file plus image files, all under
@@ -192,7 +192,7 @@ Then `systemctl enable --now staged`.
    the certificate automatically):
 
 ```
-yourdomain.com {
+stagely.org, www.stagely.org {
     reverse_proxy localhost:3000
 }
 ```
@@ -200,10 +200,9 @@ yourdomain.com {
 Then `systemctl reload caddy`.
 
 6. **Stripe**: swap to live keys in `.env`, then in the Stripe dashboard add a
-   webhook endpoint `https://yourdomain.com/api/webhooks/stripe` for
+   webhook endpoint `https://stagely.org/api/webhooks/stripe` for
    `checkout.session.completed` and set `STRIPE_WEBHOOK_SECRET`.
-7. **Resend**: verify your domain and set `EMAIL_FROM` so sign-in codes reach
-   everyone.
+7. **Resend**: verify `stagely.org` and set `EMAIL_FROM=Stagely <hello@stagely.org>`.
 8. **Backups**: everything lives in `/home/staged/app/data`. A nightly
    `tar czf` of that directory to anywhere off the box is enough.
 
@@ -211,12 +210,11 @@ To ship an update: `su - staged -c "cd app && git pull && npm ci && npm run buil
 
 ## Launch checklist
 
-- [ ] Resend: verify a domain and set `EMAIL_FROM` — until then sign-in codes
-      only deliver to the Resend account owner's inbox
-- [ ] Buy a domain, set `SITE_URL`
+- [x] Resend: verify `stagely.org` and set `EMAIL_FROM=Stagely <hello@stagely.org>`
+- [x] Domain: `stagely.org`, set `SITE_URL=https://stagely.org`
 - [ ] Swap Stripe test keys for live keys + make one real purchase
-- [ ] Stripe webhook endpoint + `STRIPE_WEBHOOK_SECRET`
-- [ ] Replace `hello@staged.example` in `app/page.tsx` with a real email
+- [ ] Stripe webhook endpoint `https://stagely.org/api/webhooks/stripe` + `STRIPE_WEBHOOK_SECRET`
+- [x] Contact email is `hello@stagely.org`
 - [ ] Keep an eye on Cursor API usage/credits — each render is an agent run
 - [ ] Post before/afters in realtor Facebook groups / r/realtors — sell the
       $30/photo vs 30¢/image comparison

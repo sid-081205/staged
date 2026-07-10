@@ -421,7 +421,7 @@ export default function Home() {
                 <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Asked and answered.</h2>
                 <p className="mt-4 leading-relaxed text-muted">
                   Something else?{" "}
-                  <a href="mailto:stagelyhelp@gmail.com" className="text-ink underline underline-offset-4">
+                  <a href="mailto:hello@stagely.org" className="text-ink underline underline-offset-4">
                     Email us
                   </a>
                   . A person replies.
@@ -493,8 +493,8 @@ export default function Home() {
               </div>
               <div className="space-y-2">
                 <p className="font-medium">Contact</p>
-                <a href="mailto:stagelyhelp@gmail.com" className="block text-muted hover:text-ink">
-                  stagelyhelp@gmail.com
+                <a href="mailto:hello@stagely.org" className="block text-muted hover:text-ink">
+                  hello@stagely.org
                 </a>
               </div>
             </div>
