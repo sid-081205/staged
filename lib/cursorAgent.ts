@@ -15,7 +15,10 @@ import sharp from "sharp";
 
 const API = "https://api.cursor.com";
 const REPO = process.env.CURSOR_REPO || "https://github.com/sid-081205/images";
-const MODEL = process.env.CURSOR_MODEL || "composer-2.5";
+// Which Cursor model runs the render. Override with CURSOR_MODEL in .env; run
+// `node experiments/model-comparison/run.mjs --list` to see valid ids, and the
+// harness in that folder to compare their image output.
+const MODEL = (process.env.CURSOR_MODEL || "composer-2.5").trim();
 
 const POLL_INTERVAL_MS = 5_000;
 // Generous: the agent may need a second generation attempt if the first one

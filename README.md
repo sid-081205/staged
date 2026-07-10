@@ -48,6 +48,11 @@ Each render spins up a Cursor cloud agent (`lib/cursorAgent.ts`):
 Requirements: a Cursor API key, and a GitHub repo (default
 `sid-081205/images`) that is non-empty and connected to Cursor's GitHub app.
 
+The model is set by `CURSOR_MODEL` (default `composer-2.5`). To decide which
+model gives the best images, use the comparison harness in
+`experiments/model-comparison/` — it renders the same photo through every model
+you list and builds a side-by-side gallery. See its README.
+
 ## Try it right now (sandbox)
 
 1. `npm run build && npm run start` → open `http://localhost:3000`

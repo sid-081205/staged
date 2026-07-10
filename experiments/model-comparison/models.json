@@ -1,0 +1,9 @@
+{
+  "_comment": "Models to try. Run `node run.mjs --list` to fetch the live list of models your account can use (from GET /v1/models), then edit this array. Each entry is a model id; optionally add params, e.g. { \"id\": \"composer-2\", \"params\": [{ \"id\": \"fast\", \"value\": \"true\" }] }.",
+  "models": [
+    { "id": "composer-2.5" },
+    { "id": "composer-2" },
+    { "id": "claude-4.6-sonnet-thinking" },
+    { "id": "gpt-5.3-codex" }
+  ]
+}
