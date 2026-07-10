@@ -57,6 +57,10 @@ const faq: [string, string][] = [
     "What if the renders are unusable?",
     "Email us within 7 days and we refund the pack. No forms, no arguing.",
   ],
+  [
+    "If I want to work on a greater number of pictures, can we bulk process images?",
+    "Yes! We work with enterprises and larger companies that might require more images. Email us at stagelyhelp@gmail.com.",
+  ],
 ];
 
 const steps: [string, string][] = [
