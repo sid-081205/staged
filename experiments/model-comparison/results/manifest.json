@@ -1,0 +1,70 @@
+{
+  "input": "public/demo/before.jpg",
+  "generatedAt": "2026-07-10T01:06:44.077Z",
+  "results": [
+    {
+      "model": "composer-2.5",
+      "prompts": [
+        {
+          "slug": "gym-piano-farmhouse",
+          "file": "/workspace/experiments/model-comparison/output/composer-2.5/gym-piano-farmhouse.jpg",
+          "ms": 314207
+        },
+        {
+          "slug": "scandinavian-living-room",
+          "file": "/workspace/experiments/model-comparison/output/composer-2.5/scandinavian-living-room.jpg",
+          "ms": 378185
+        }
+      ],
+      "totalMs": 692392
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "prompts": [
+        {
+          "slug": "gym-piano-farmhouse",
+          "file": "/workspace/experiments/model-comparison/output/gpt-5.6-sol/gym-piano-farmhouse.jpg",
+          "ms": 63095
+        },
+        {
+          "slug": "scandinavian-living-room",
+          "file": "/workspace/experiments/model-comparison/output/gpt-5.6-sol/scandinavian-living-room.jpg",
+          "ms": 78244
+        }
+      ],
+      "totalMs": 141339
+    },
+    {
+      "model": "gemini-3.1-pro",
+      "prompts": [
+        {
+          "slug": "gym-piano-farmhouse",
+          "file": "/workspace/experiments/model-comparison/output/gemini-3.1-pro/gym-piano-farmhouse.jpg",
+          "ms": 157176
+        },
+        {
+          "slug": "scandinavian-living-room",
+          "file": "/workspace/experiments/model-comparison/output/gemini-3.1-pro/scandinavian-living-room.jpg",
+          "ms": 252387
+        }
+      ],
+      "totalMs": 409563
+    },
+    {
+      "model": "claude-opus-4-8",
+      "prompts": [
+        {
+          "slug": "gym-piano-farmhouse",
+          "file": "/workspace/experiments/model-comparison/output/claude-opus-4-8/gym-piano-farmhouse.jpg",
+          "ms": 173836
+        },
+        {
+          "slug": "scandinavian-living-room",
+          "file": "/workspace/experiments/model-comparison/output/claude-opus-4-8/scandinavian-living-room.jpg",
+          "ms": 142014
+        }
+      ],
+      "totalMs": 315850
+    }
+  ]
+}

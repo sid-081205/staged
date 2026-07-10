@@ -66,5 +66,6 @@ The app reads `CURSOR_MODEL` in `lib/cursorAgent.ts` (default `composer-2.5`).
 
 ## Note
 
-`output/` is gitignored — generated images stay local so they don't bloat the
-repo. Delete the folder any time to start fresh.
+`output/` is gitignored — fresh runs stay local so they don't bloat the repo.
+A committed snapshot of one run (4 models x 2 prompts) lives in `results/` with
+a summary in `RESULTS.md`; open `results/index.html` to view it.
