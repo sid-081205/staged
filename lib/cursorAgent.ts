@@ -9,6 +9,19 @@ import sharp from "sharp";
  * save the generated image into the agent's artifacts directory. We poll the
  * run until it finishes, then download the artifact via a presigned URL.
  *
+ * Latency design (target: 2–3 min wall clock, was 5–7 min):
+ * - The agent is told to call the image tool as its FIRST action — no
+ *   written scene inventory before generating (saved ~30–60s).
+ * - The verify-against-original step is kept (it is the product's fidelity
+ *   moat) but capped at ONE regeneration, and `enhance` never regenerates
+ *   (global tonal edits don't drift architecture; a retry just doubles time).
+ * - Artifacts are polled every 3s instead of 5s.
+ *
+ * Dimension lock: the output always matches the preprocessed input's exact
+ * width×height. The agent is told the required aspect/orientation up front,
+ * and after download we cover-resize to the recorded target size, so a
+ * portrait upload can never come back as a landscape crop.
+ *
  * With MOCK_GENERATION=1, returns a tinted copy of the input instead (for
  * local development without burning agent credits).
  */
@@ -20,10 +33,13 @@ const REPO = process.env.CURSOR_REPO || "https://github.com/sid-081205/images";
 // harness in that folder to compare their image output.
 const MODEL = (process.env.CURSOR_MODEL || "composer-2.5").trim();
 
-const POLL_INTERVAL_MS = 5_000;
-// Generous: the agent may need a second generation attempt if the first one
-// altered the room's architecture.
+const POLL_INTERVAL_MS = 3_000;
+// Safety net only — typical renders should finish in 2–3 minutes now that the
+// agent generates immediately and retries at most once.
 const TIMEOUT_MS = 8 * 60_000;
+
+/** Long-edge cap for the image sent to the model. */
+const INPUT_LONG_EDGE = 2048;
 
 function authHeader(): string {
   const key = process.env.CURSOR_API_KEY;
@@ -49,43 +65,98 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * EXIF-rotate and cap the upload at INPUT_LONG_EDGE on its long edge, keeping
+ * the aspect ratio. The returned width/height are the contract for the final
+ * output: whatever the model does, we deliver exactly this size back.
+ */
+export async function preprocessInput(
+  inputPath: string
+): Promise<{ buffer: Buffer; width: number; height: number }> {
+  const { data, info } = await sharp(fs.readFileSync(inputPath))
+    .rotate() // apply EXIF orientation
+    .resize(INPUT_LONG_EDGE, INPUT_LONG_EDGE, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 92 })
+    .toBuffer({ resolveWithObject: true });
+  return { buffer: data, width: info.width, height: info.height };
+}
+
+/**
+ * Force the generated image to the exact dimensions of the preprocessed
+ * input. Models often return a fixed size (e.g. 1536×1024); the prompt pushes
+ * them to the right aspect, and this cover-resize guarantees the delivered
+ * file matches the upload's orientation and pixel size.
+ */
+export async function lockToDimensions(bytes: Buffer, width: number, height: number): Promise<Buffer> {
+  return sharp(bytes).resize(width, height, { fit: "cover" }).jpeg({ quality: 95 }).toBuffer();
+}
+
+function orientationWord(width: number, height: number): string {
+  if (width === height) return "square";
+  return width > height ? "landscape" : "portrait";
+}
+
+/**
+ * The wrapper around the image-tool instruction. Tuned for speed: the agent
+ * must generate first (no written analysis), verify once, and regenerate at
+ * most once — never for `enhance`.
+ */
+export function buildAgentPrompt(
+  prompt: string,
+  opts: { width: number; height: number; service?: string }
+): string {
+  const { width, height, service } = opts;
+  const orientation = orientationWord(width, height);
+  const dimensionLine = `OUTPUT DIMENSIONS: the reference photo is ${width}×${height} pixels (${orientation}). The output image MUST keep this exact aspect ratio and ${orientation} orientation. Do not crop to a different shape, do not letterbox, do not change the framing.`;
+
+  const verifyStep =
+    service === "enhance"
+      ? "Step 2: Confirm the generated image kept the same objects, architecture and orientation as the original photo. Do NOT regenerate for tonal differences — lighting changes are the point. Deliver it."
+      : [
+          "Step 2: VERIFY quickly — open the generated image next to the original photo. It fails ONLY if one of these clearly changed: window frames/panes/outdoor view, wall color, floor, ceiling, trim, doors, radiators, built-ins, camera position/perspective/crop, or the orientation (portrait vs landscape) — or if a specifically requested item is missing or wrong.",
+          "If it fails, regenerate EXACTLY ONCE: same instruction plus one sentence correcting what drifted. Then deliver the more faithful of the two images. Never make a third image. If it passes, deliver it immediately.",
+        ].join("\n");
+
+  return [
+    "You are an image editing worker for a real estate photo service. Your ONLY task is to produce one edited image from the attached room photo, fast. Do NOT explore the repository, do NOT read files, do NOT run git commands, and do NOT write any scene analysis or inventory.",
+    "",
+    "Step 1: IMMEDIATELY — as your first action — call your image generation tool in image-to-image / edit mode. You MUST pass the attached room photo as the reference image (use its file path in the tool's reference image parameter). Give the tool this instruction:",
+    "",
+    prompt,
+    "",
+    dimensionLine,
+    "",
+    verifyStep,
+    "",
+    "Step 3: Save ONLY the delivered image into the artifacts directory at the workspace root (a filename ending in .png or .jpg). Never place a rejected image in artifacts; keep rejected attempts outside it.",
+    "Step 4: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR.",
+  ].join("\n");
+}
+
 export async function stagePhoto(inputPath: string, prompt: string, styleKey?: string): Promise<Buffer> {
   if (process.env.MOCK_GENERATION === "1") {
     // Emulate real generation latency (real renders take 1–5 min) so the
     // background-progress flow is observable locally. Tunable / zero-able.
     const delay = Number(process.env.MOCK_DELAY_MS ?? 6000);
     if (delay > 0) await new Promise((r) => setTimeout(r, delay));
-    const base = sharp(inputPath).rotate();
-    if (styleKey === "enhance") {
-      return base.modulate({ brightness: 1.18, saturation: 1.12 }).jpeg({ quality: 92 }).toBuffer();
-    }
-    if (styleKey === "declutter") {
-      return base.modulate({ brightness: 1.06, saturation: 0.9 }).jpeg({ quality: 92 }).toBuffer();
-    }
-    return base.modulate({ brightness: 1.05, saturation: 1.25, hue: 15 }).jpeg({ quality: 92 }).toBuffer();
+    // Mirror the production contract: output dimensions == preprocessed input.
+    const { buffer, width, height } = await preprocessInput(inputPath);
+    const base = sharp(buffer);
+    const tinted =
+      styleKey === "enhance"
+        ? base.modulate({ brightness: 1.18, saturation: 1.12 })
+        : styleKey === "declutter"
+          ? base.modulate({ brightness: 1.06, saturation: 0.9 })
+          : base.modulate({ brightness: 1.05, saturation: 1.25, hue: 15 });
+    return lockToDimensions(await tinted.toBuffer(), width, height);
   }
 
-  // Cap input at 2048px on the long edge to keep the upload small.
-  const input = await sharp(fs.readFileSync(inputPath))
-    .rotate() // apply EXIF orientation
-    .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
-    .jpeg({ quality: 92 })
-    .toBuffer();
+  const { buffer: input, width, height } = await preprocessInput(inputPath);
 
-  const agentPrompt = [
-    "You are an image editing worker for a real estate photo service. Your ONLY task is to produce one edited image from the attached room photo. Do NOT explore the repository, do NOT read files, do NOT run git commands.",
-    "",
-    "Step 1: Look at the attached room photo carefully and note its fixed features: camera angle, each window (frame style, number of panes, the view through it), doors, radiators, wall colors, flooring, ceiling and light fixtures. These must all survive the edit unchanged.",
-    "",
-    "Step 2: Call your image generation tool in image-to-image / edit mode. You MUST pass the attached room photo as the reference image (use its file path in the tool's reference image parameter). Give the tool this instruction:",
-    "",
-    prompt,
-    "",
-    "Step 3: VERIFY before delivering. Open the generated image and compare it against the original photo. It fails (regenerate) if ANY of these changed: window frames/panes/outdoor view, wall color, floor, ceiling, trim, doors, radiators, vents, built-ins, camera position, perspective, or crop — or if the room was replaced/restyled. If a specifically requested item is missing or wrong, regenerate correcting that. At most 2 generation attempts; deliver the more faithful result.",
-    "",
-    "Step 4: Save ONLY the final approved image into the artifacts directory at the workspace root (a filename ending in .png or .jpg). Never place a rejected image in artifacts. Keep rejected attempts outside the artifacts directory.",
-    "Step 5: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR.",
-  ].join("\n");
+  // Renders store a furniture style key for staging or the service key for
+  // declutter/enhance; only "enhance"/"declutter" matter to the wrapper.
+  const service = styleKey === "enhance" || styleKey === "declutter" ? styleKey : "stage";
+  const agentPrompt = buildAgentPrompt(prompt, { width, height, service });
 
   const created = await api<{ agent: { id: string }; run: { id: string } }>("/v1/agents", {
     method: "POST",
@@ -147,8 +218,8 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
     // if it is still running so it doesn't keep spending.
     api(`/v1/agents/${agentId}/runs/${runId}/cancel`, { method: "POST" }).catch(() => {});
 
-    // Normalize to JPEG regardless of what the agent saved.
-    return await sharp(bytes).jpeg({ quality: 95 }).toBuffer();
+    // Deliver at exactly the preprocessed input's dimensions.
+    return await lockToDimensions(bytes, width, height);
   } finally {
     // Best-effort cleanup so render agents don't pile up in the dashboard.
     api(`/v1/agents/${agentId}/archive`, { method: "POST" }).catch(() => {});

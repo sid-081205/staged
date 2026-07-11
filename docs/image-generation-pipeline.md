@@ -95,11 +95,11 @@ sequenceDiagram
 
 ### Key constants ([`lib/cursorAgent.ts`](lib/cursorAgent.ts))
 
-- Input: long edge capped at **2048**, `fit: "inside"`, JPEG quality **92**
-- Poll interval: **5s**
-- Timeout: **8 minutes**
+- Input: long edge capped at **2048**, `fit: "inside"`, JPEG quality **92** (`preprocessInput`, records target width×height)
+- Poll interval: **3s**
+- Timeout: **8 minutes** (safety net; typical renders now 2–3 min)
 - Artifact pick: largest `.png` / `.jpg` / `.webp` with `sizeBytes > 10_000`
-- Output normalize: JPEG quality **95** (no dimension lock in production today)
+- Output normalize: `lockToDimensions` — cover-resize to the recorded input width×height, JPEG quality **95**
 
 ---
 
@@ -118,17 +118,15 @@ Built in [`lib/config.ts`](lib/config.ts). This string is what the agent must pa
 - Optional user `extraPrompt` is appended; must not override architecture rules.
 - Room type is dynamic (`kitchen`, `living room`, …) via `ROOM_TYPES`.
 
-### Layer B — Agent wrapper ([`lib/cursorAgent.ts`](lib/cursorAgent.ts))
+### Layer B — Agent wrapper (`buildAgentPrompt` in [`lib/cursorAgent.ts`](lib/cursorAgent.ts))
 
-Around `buildPrompt`, the agent is told to:
+Around `buildPrompt`, the agent is told to (generate-first, 2026-07):
 
-1. Look at the photo / note fixed features  
-2. Call image tool in img2img mode with the attached photo as reference + Layer A text  
-3. **Verify** vs original; regenerate if architecture drifted (**at most 2 generation attempts**)  
+1. IMMEDIATELY call the image tool in img2img mode with the attached photo as reference + Layer A text — no written scene analysis first  
+2. The wrapper injects the exact `OUTPUT DIMENSIONS` (width×height + orientation) of the preprocessed input  
+3. **Verify** vs original with the same DO NOT checks; regenerate **exactly once** if a hard constraint drifted (`enhance` never regenerates)  
 4. Save only the approved image to artifacts  
-5. Reply DONE — no git commit / PR  
-
-Step 3 verify language was aligned with the same DO NOT checks when hard-negatives landed in prod.
+5. Reply DONE — no git commit / PR
 
 ### Experiments (not production)
 
@@ -160,25 +158,16 @@ From prompt-lab timings on real runs:
 2. **Final delivered image must match the upload’s display dimensions / aspect ratio** — same orientation; same pixel size as the **preprocessed** input we send to the model (after EXIF rotate + long-edge cap), or an explicitly documented equivalent (e.g. exact `width×height` of that buffer).
 3. **Never silently crop to landscape** or a fixed model default (e.g. 1536×1024) without correcting back.
 
-### Current production state
+### Current production state (2026-07, dimension lock SHIPPED)
 
 - Upload path applies EXIF orientation via sharp when decoding/serving.
-- Generation input is resized with `fit: "inside"` (aspect preserved **into** the model).
-- **Production does not yet force the agent output back to the input width×height.** Models often return a fixed size (e.g. 1536×1024 or 1024×1536) that can be the wrong aspect vs a 3:4 phone shot.
-- Prompt-lab experimented with:
-  - Prompt text demanding matching aspect/orientation  
-  - Post-download `sharp` `resize(targetW, targetH, { fit: "cover" })` to lock pixels  
+- Generation input is resized with `fit: "inside"` (aspect preserved **into** the model); `preprocessInput` in [`lib/cursorAgent.ts`](lib/cursorAgent.ts) records the resulting `width`×`height`.
+- The agent wrapper (`buildAgentPrompt`) tells the model the exact target pixel size and orientation (`OUTPUT DIMENSIONS: … ${width}×${height} (portrait/landscape/square)`), and `buildPrompt` carries a matching hard constraint.
+- After download, `lockToDimensions` cover-resizes the artifact to exactly the recorded input size — a portrait upload can never come back as a landscape crop. Mock mode goes through the same contract.
 
-**Still TODO for production:** port that dimension lock into [`lib/cursorAgent.ts`](lib/cursorAgent.ts) (and optionally echo aspect in the agent wrapper). Prefer: record `targetW`/`targetH` after preprocess → after download, cover-crop (or pad only if product decides) to exact size → JPEG.
+### FAQ (shipped)
 
-### FAQ (must update when shipping dimension lock)
-
-Add a short FAQ entry on the marketing page ([`app/page.tsx`](app/page.tsx) FAQ section) once behavior is live, along these lines:
-
-> **Will my staged photo keep the same size and orientation as my upload?**  
-> Yes. We accept portrait, landscape, and square photos. The finished image matches the dimensions (and orientation) of the photo you uploaded — we don’t stretch it into a fixed landscape crop.
-
-Also tighten any copy that implies “minutes later” / fixed aspect if needed. Until the code ships, **do not** claim same-dimensions in the FAQ.
+The marketing page ([`app/page.tsx`](app/page.tsx) FAQ) now includes: how the supervised render process works, which photos work best (any orientation), and the same-dimensions promise.
 
 ---
 
@@ -188,11 +177,10 @@ Ranked by impact vs risk. Hard-negatives in `buildPrompt` should stay unless a b
 
 ### A. Stay on Cloud Agents (smaller wins)
 
-1. **One-shot generation** — Remove or gate Step 3 verify+retry (often doubles time). Keep hard-negatives in the image prompt. Optional: retry only for `stage`, never for `enhance`.
-2. **Shorter Step 1** — “Call the image tool immediately; do not write long inventories.”
+1. **[SHIPPED 2026-07] Generate-first wrapper** — the agent's first action is the image tool call; no written scene inventory. Verify is kept but capped at ONE regeneration, and `enhance` never regenerates. See `buildAgentPrompt` in [`lib/cursorAgent.ts`](lib/cursorAgent.ts) and `experiments/pipeline-v2/` for the bake-off.
+2. **[SHIPPED 2026-07] Faster polling** — 3s interval (was 5s).
 3. **Reduce repo overhead** — Investigate API options for no-repo / empty snapshot; cloning `images` every time is pure overhead for img2img.
 4. **Model / fast params** — If Cloud Agents supports `params` like `fast`, A/B in prompt-lab (`experiments/model-comparison`, `experiments/prompt-lab`).
-5. **Smarter polling** — 1–2s interval early, then 5s (saves seconds only).
 
 ### B. Biggest win: direct image API
 
@@ -213,9 +201,9 @@ Ranked by impact vs risk. Hard-negatives in `buildPrompt` should stay unless a b
 
 ## Suggested implementation order for the next agent
 
-1. **Dimension lock in `stagePhoto`** + FAQ entry on [`app/page.tsx`](app/page.tsx) (user-visible correctness).  
-2. **One-shot agent wrapper** A/B (quick latency cut, measure fidelity).  
-3. **Provider interface + one direct img2img backend** (structural speed fix).  
+1. ~~**Dimension lock in `stagePhoto`** + FAQ entry on [`app/page.tsx`](app/page.tsx)~~ — DONE (2026-07).  
+2. ~~**One-shot agent wrapper** A/B~~ — DONE (2026-07), gated verify with max 1 regeneration; bake-off in `experiments/pipeline-v2/`.  
+3. **Provider interface + one direct img2img backend** (structural speed fix, only if 2–3 min is still too slow).  
 4. Deploy: `master` → VPS `/home/staged/app` → `git pull && npm ci && npm run build && systemctl restart staged`.
 
 ---

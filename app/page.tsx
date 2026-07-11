@@ -30,8 +30,16 @@ const faq: [string, string][] = [
     "Yes. Most MLSs allow it and require disclosure. Every download has an optional \"Virtually staged\" label you can toggle on to stay compliant. Check your local MLS rules, since some also want the empty original alongside.",
   ],
   [
+    "How does the AI staging actually work?",
+    "Each render runs as a small supervised process, not a single blind AI call. The model first locks onto your photo's fixed features (windows, walls, floors, camera angle), then edits the image in place under a strict list of things it may never change. Before you see the result, it is compared against your original photo, and if the architecture drifted it is regenerated once with a correction. Most renders finish in 2 to 3 minutes.",
+  ],
+  [
     "What photos work best?",
-    "A straight on, well lit photo of the whole room, shot from a corner or doorway at chest height. Phone photos are fine, including iPhone HEIC files. Blurry or very dark photos produce worse furniture.",
+    "A straight on, well lit photo of the whole room, shot from a corner or doorway at chest height. Phone photos are fine, including iPhone HEIC files, and any orientation works: portrait, landscape or square. Sharp, evenly lit photos give the most faithful results; blurry or very dark photos still render, but with less convincing furniture detail.",
+  ],
+  [
+    "Will my staged photo keep the same size and orientation as my upload?",
+    "Yes. We accept portrait, landscape and square photos, and the finished image matches the dimensions and orientation of the photo you uploaded. We never stretch or crop your photo into a fixed landscape frame.",
   ],
   [
     "Can it remove existing furniture?",

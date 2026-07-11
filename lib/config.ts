@@ -274,6 +274,7 @@ export function buildPrompt(
     "DO NOT change window frames, mullions, pane count, glass reflections, or the outdoor view.",
     "DO NOT change wall color, floor material, ceiling, trim, doors, radiators, vents, outlets, or built-in fixtures.",
     "DO NOT change camera position, focal length, perspective, or crop.",
+    "DO NOT change the image's aspect ratio or orientation: a portrait photo stays portrait, a landscape photo stays landscape, with the same field of view.",
     "DO NOT rebuild, restyle, or 'improve' the architecture.",
     `DO NOT replace the ${roomLabel} with a similar-looking room or any other room type.`,
   ].join(" ");
@@ -314,6 +315,7 @@ export function buildPrompt(
       `Add realistic, correctly scaled ${STYLES[styleKey].prompt}.`,
       `Arrange the pieces naturally for a ${roomLabel}, respecting walkways and the room's real proportions. The finished room MUST be furnished; never return an empty or nearly empty room.`,
       hardConstraints,
+      "DO NOT remove, move, resize or restyle anything already present in the photo — additions only.",
       "Only new pixels should be furniture and soft decor sitting on the EXISTING floor with correct contact shadows.",
       "Match the original photo's lighting direction, shadows, white balance and perspective so every added piece looks genuinely present in the room.",
       situation,
