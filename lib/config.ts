@@ -283,7 +283,13 @@ export function buildPrompt(
     return (
       [
         `Image-to-image EDIT of the attached real estate photo of a ${roomLabel}. Only photographic quality may change — not objects or architecture.`,
-        "Correct the exposure and white balance, brighten dark areas naturally, recover washed out windows, and make the light feel bright and inviting. If sky is visible through windows, make it a pleasant blue sky. Straighten the image if it is slightly tilted.",
+        // Wording benchmarked in experiments/kitchen-enhance-lab (2026-07):
+        // the "professional photo editor" framing with explicit cast/deblur
+        // steps gave the most consistent fidelity and the cleanest white
+        // balance of the tested enhance instructions.
+        "Fix the light like a professional real estate photo editor: neutralize color casts from mixed light sources so whites are truly white, balance the exposure between bright and shadowed areas, gently lift shadows without crushing highlights, and remove the harsh glare of ceiling fixtures while keeping them switched on.",
+        "Reduce motion blur and sensor noise so edges and text on labels are crisp. Preserve real surface textures — do not plastic-smooth walls, wood or countertops.",
+        "If sky or outdoor view is visible through a window, recover it naturally with a pleasant blue sky. Straighten the image if it is slightly tilted.",
         "DO NOT add, remove or move any furniture or objects. Every physical thing stays exactly where it is.",
         hardConstraints,
         "The result must look like the same photo shot by a professional real estate photographer with proper HDR technique. Photorealistic, natural, not over processed. No people, no text, no watermark.",

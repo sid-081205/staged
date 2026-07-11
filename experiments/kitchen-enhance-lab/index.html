@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kitchen “Fix lighting” Pipeline Lab — Staged.</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --panel2: #1c2330; --line: #2b3444;
+    --text: #e6edf3; --dim: #8b98a9; --accent: #4ea1ff; --good: #3fb950;
+    --warn: #d29922; --bad: #f85149; --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font-size: 34px; line-height: 1.2; margin-bottom: 8px; }
+  h2 { font-size: 24px; margin: 56px 0 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+  h3 { font-size: 18px; margin: 28px 0 10px; }
+  p.lede { color: var(--dim); font-size: 18px; max-width: 860px; }
+  p { margin-bottom: 12px; max-width: 900px; }
+  .dim { color: var(--dim); }
+  code { background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: 0.88em; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .04em; border-radius: 999px; padding: 2px 10px; vertical-align: middle; }
+  .pill.pass { background: #12341c; color: var(--good); border: 1px solid #1f5c31; }
+  .pill.drift { background: #3a2d10; color: var(--warn); border: 1px solid #6b520f; }
+  .pill.fail { background: #40181a; color: var(--bad); border: 1px solid #742a2e; }
+  .pill.timeout { background: #2b2140; color: var(--purple); border: 1px solid #4c3a72; }
+  .pill.ship { background: #0f2a4a; color: var(--accent); border: 1px solid #1e548f; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0 8px; font-size: 15px; }
+  th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--panel2); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+  tr.win td { background: #10231a; }
+  .grid { display: grid; gap: 18px; margin: 20px 0; }
+  .grid.two { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .card img { width: 100%; display: block; }
+  .card .cap { padding: 12px 14px; font-size: 14px; }
+  .card .cap b { display: block; font-size: 15px; margin-bottom: 2px; }
+  .hero { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 24px 0; }
+  .hero img { width: 100%; display: block; }
+  .note { background: var(--panel); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 18px 0; max-width: 900px; }
+  .note.bad { border-left-color: var(--bad); }
+  .note.good { border-left-color: var(--good); }
+  ul { margin: 0 0 14px 22px; }
+  li { margin-bottom: 6px; max-width: 860px; }
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 90px; align-items: center; gap: 12px; margin: 6px 0; font-size: 14px; }
+  .bar-track { background: var(--panel2); border-radius: 5px; height: 22px; position: relative; overflow: hidden; }
+  .bar { height: 100%; border-radius: 5px; }
+  footer { margin-top: 72px; color: var(--dim); font-size: 13px; border-top: 1px solid var(--line); padding-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Kitchen “Fix lighting” pipeline lab</h1>
+<p class="lede">Ten live renders of one real kitchen photo (<code>experiments/IMG_1201.jpeg</code>, 1170×864) through four pipeline variations of the <b>enhance / fix-lighting</b> service, on the real Cursor Cloud Agents API with <code>composer-2.5</code>, repo-less. Goal: find the best time/quality trade-off. Companion to the <a href="../pipeline-v2/index.html" style="color:var(--accent)">bedroom staging lab</a>.</p>
+
+<h2>The input</h2>
+<div class="hero"><img src="input_preprocessed.jpg" alt="Original kitchen photo (preprocessed)" /></div>
+<p class="dim">A small galley kitchen under a single fluorescent tube: strong yellow-green color cast (measured cast 23.7), dull exposure (mean luminance 139), soft focus (sharpness 2.35), window over the sink seen at a sharp angle. Exactly the kind of photo the enhance service exists for — and a hard fidelity test, because the room is cluttered with small objects (boxes on the cabinets, mop, bins, dish rack, boiler) that a lazy model loves to “clean up”.</p>
+
+<h2>The four variations</h2>
+<table>
+  <tr><th>Variant</th><th>Agent wrapper</th><th>Enhance instruction</th><th>Poll</th><th>Idea</th></tr>
+  <tr>
+    <td><b>old</b></td>
+    <td>Pre-July wrapper: “study the photo and note its features” first, then generate, then verify with up to 2 attempts (un-gated)</td>
+    <td>Old wording (exposure/white-balance/windows), no aspect-ratio hard-no</td>
+    <td>5s</td>
+    <td>Baseline: what production did before this week’s PR</td>
+  </tr>
+  <tr>
+    <td><b>prod</b></td>
+    <td>Shipped wrapper: generate <i>immediately</i>, then confirm-only verify (enhance never regenerates), dimension line injected</td>
+    <td>Current production wording</td>
+    <td>3s</td>
+    <td>Control: what the PR ships today</td>
+  </tr>
+  <tr>
+    <td><b>lean</b></td>
+    <td>Stripped further: <b>no verify step at all</b> — “the tool’s output is final, deliver it”</td>
+    <td>Current production wording</td>
+    <td>3s</td>
+    <td>Time-optimized: is the verify step dead weight for enhance?</td>
+  </tr>
+  <tr>
+    <td><b>tuned</b></td>
+    <td>Shipped wrapper (same as prod)</td>
+    <td>Rewritten “professional photo editor” wording: neutralize color casts, balance exposure, lift shadows, de-glare fixtures, deblur/denoise, preserve textures</td>
+    <td>3s</td>
+    <td>Quality-optimized: better lighting language, same guardrails</td>
+  </tr>
+</table>
+
+<h2>Timing results (10 live renders)</h2>
+<div style="max-width:860px">
+  <div class="bar-row"><span>lean #1</span><div class="bar-track"><div class="bar" style="width:18%;background:var(--bad)"></div></div><span>108s ✗ wrong room</span></div>
+  <div class="bar-row"><span>lean #2</span><div class="bar-track"><div class="bar" style="width:23%;background:var(--warn)"></div></div><span>138s drift</span></div>
+  <div class="bar-row"><span>prod #1</span><div class="bar-track"><div class="bar" style="width:28%;background:var(--good)"></div></div><span>168s ✓</span></div>
+  <div class="bar-row"><span>tuned #3</span><div class="bar-track"><div class="bar" style="width:30%;background:var(--good)"></div></div><span>179s ✓</span></div>
+  <div class="bar-row"><span>tuned #2</span><div class="bar-track"><div class="bar" style="width:30%;background:var(--good)"></div></div><span>180s ✓</span></div>
+  <div class="bar-row"><span>prod #4</span><div class="bar-track"><div class="bar" style="width:36%;background:var(--good)"></div></div><span>217s ✓</span></div>
+  <div class="bar-row"><span>old #1</span><div class="bar-track"><div class="bar" style="width:49%;background:var(--warn)"></div></div><span>296s drift</span></div>
+  <div class="bar-row"><span>tuned #1</span><div class="bar-track"><div class="bar" style="width:51%;background:var(--good)"></div></div><span>309s ✓</span></div>
+  <div class="bar-row"><span>old #2</span><div class="bar-track"><div class="bar" style="width:79%;background:var(--bad)"></div></div><span>474s ✗ wrong room</span></div>
+  <div class="bar-row"><span>prod #2, #3</span><div class="bar-track"><div class="bar" style="width:100%;background:var(--purple)"></div></div><span>&gt;600s timeout</span></div>
+</div>
+<p class="dim">Wall clock from agent creation to delivered, dimension-locked file. All ten delivered artifacts came back 1536×1024 raw and were locked to 1170×864 (exact input dimensions) by <code>lockToDimensions</code>.</p>
+
+<table>
+  <tr><th>Variant</th><th>Runs</th><th>Faithful</th><th>Time (faithful runs)</th><th>Verdict</th></tr>
+  <tr><td><b>old</b></td><td>2</td><td>1 of 2 <span class="pill fail">1 wrong room</span></td><td>296s</td><td>Slow and unsafe: inventory step costs time, un-gated retry still approved a fabricated luxury kitchen</td></tr>
+  <tr><td><b>prod</b></td><td>4</td><td>2 of 2 delivered <span class="pill timeout">2 timeouts</span></td><td>168s, 217s</td><td>Fast and faithful when it lands, but 2 of 4 agents stalled past the 10-min cap</td></tr>
+  <tr><td><b>lean</b></td><td>2</td><td>1 of 2 <span class="pill fail">1 wrong room</span></td><td>138s</td><td>Fastest (108–138s) but a coin flip: with no verify, a rogue generation ships straight to the customer</td></tr>
+  <tr class="win"><td><b>tuned</b> <span class="pill ship">SHIPPED</span></td><td>3</td><td>3 of 3</td><td>179s, 180s, 309s</td><td>Only variant with zero failures; best white balance; median ~3 min</td></tr>
+</table>
+
+<h2>What each variant delivered</h2>
+
+<h3>old — pre-July pipeline <span class="pill drift">DRIFT</span> <span class="pill fail">1 FAIL</span></h3>
+<div class="grid two">
+  <div class="card"><img src="runs/old-run1.jpg" alt="old run 1" /><div class="cap"><b>old #1 — 296s, drift</b>Good lighting fix, but it invented an extractor fan on the back wall, restyled the boiler pipework, enlarged the window and added a second green bucket.</div></div>
+  <div class="card"><img src="runs/old-run2.jpg" alt="old run 2" /><div class="cap"><b>old #2 — 474s, FAIL</b>Total fabrication: a luxury kitchen with an island, pendant lights and a garden view. The un-gated verify step approved it anyway. 8 minutes to produce the wrong room.</div></div>
+</div>
+
+<h3>prod — shipped pipeline <span class="pill pass">FAITHFUL</span> <span class="pill timeout">2 TIMEOUTS</span></h3>
+<div class="grid two">
+  <div class="card"><img src="runs/prod-run1.jpg" alt="prod run 1" /><div class="cap"><b>prod #1 — 168s, pass</b>Same room, same clutter, clean bright light. Minor drift: the window is rendered larger and more frontal than the sharp angle in the original.</div></div>
+  <div class="card"><img src="runs/prod-run4.jpg" alt="prod run 4" /><div class="cap"><b>prod #4 — 217s, pass</b>Very faithful: boxes, boiler, towel, mop bucket and bins all preserved; warm cast removed; window view recovered naturally.</div></div>
+</div>
+<div class="note">prod #2 and #3 never produced an artifact within the 10-minute cap (agents stayed <code>RUNNING</code> and were cancelled). The agent occasionally over-thinks the confirm step even though the prompt forbids regeneration — worth watching, and one more reason the wording matters.</div>
+
+<h3>lean — no verify step <span class="pill fail">1 CATASTROPHIC FAIL</span></h3>
+<div class="grid two">
+  <div class="card"><img src="runs/lean-run1.jpg" alt="lean run 1" /><div class="cap"><b>lean #1 — 108s, FAIL</b>The fastest render of the whole lab — of a completely different upscale kitchen with an island, bar stools and a fruit bowl. Nothing checked it, so it would have shipped.</div></div>
+  <div class="card"><img src="runs/lean-run2.jpg" alt="lean run 2" /><div class="cap"><b>lean #2 — 138s, drift</b>Right room and decent light, but small-object drift the verify step normally catches: thermostat migrated onto the fridge, a jar appeared, second bin invented.</div></div>
+</div>
+<div class="note bad"><b>Key finding:</b> the verify step is not dead weight, even for enhance. In 4 of 10 runs across this lab the image tool ignored the reference photo at least partially; the two variants without a working check (<b>lean</b>, <b>old</b>) each shipped a fabricated kitchen once. Saving ~40s is not worth a ~50% chance of delivering someone else’s kitchen.</div>
+
+<h3>tuned — quality-tuned instruction <span class="pill pass">3/3 FAITHFUL</span> <span class="pill ship">SHIPPED</span></h3>
+<div class="grid two">
+  <div class="card"><img src="runs/tuned-run2.jpg" alt="tuned run 2" /><div class="cap"><b>tuned #2 — 180s, pass</b>Faithful layout and clutter, neutral whites, fluorescent glare tamed, floor texture kept.</div></div>
+  <div class="card"><img src="runs/tuned-run3.jpg" alt="tuned run 3" /><div class="cap"><b>tuned #3 — 179s, pass</b>Best all-round result: every object in place (boxes, mop bucket, dish rack, boiler, green towel), crisp edges, believable daylight.</div></div>
+</div>
+<div class="grid two">
+  <div class="card"><img src="runs/tuned-run1.jpg" alt="tuned run 1" /><div class="cap"><b>tuned #1 — 309s, pass</b>Slowest tuned run but the cleanest white balance of the lab (color cast 15.8 vs 23.7 in the original).</div></div>
+  <div class="card"><img src="input_preprocessed.jpg" alt="original for comparison" /><div class="cap"><b>Original, for comparison</b>Yellow-green cast, flat light, soft focus.</div></div>
+</div>
+
+<h2>Objective quality measurements</h2>
+<p class="dim">Mean luminance (target: brighter than 139 but believable), color cast = spread between RGB channel means (lower = more neutral whites), sharpness from <code>sharp()</code> stats (higher = crisper).</p>
+<table>
+  <tr><th>Image</th><th>Luminance</th><th>Color cast</th><th>Sharpness</th><th>Faithful?</th></tr>
+  <tr><td>Original input</td><td>138.9</td><td>23.7</td><td>2.35</td><td>—</td></tr>
+  <tr><td>old #1</td><td>188.5 (over-bright)</td><td>14.4</td><td>3.81</td><td>drift</td></tr>
+  <tr><td>prod #1</td><td>162.7</td><td>33.3 (blue push)</td><td>3.97</td><td>yes</td></tr>
+  <tr><td>prod #4</td><td>—</td><td>—</td><td>—</td><td>yes</td></tr>
+  <tr><td>lean #2</td><td>168.9</td><td>19.4</td><td>4.42</td><td>drift</td></tr>
+  <tr class="win"><td>tuned #1</td><td>161.3</td><td><b>15.8 (best neutral)</b></td><td>3.32</td><td>yes</td></tr>
+  <tr class="win"><td>tuned #2</td><td>153.9</td><td>29.3</td><td>3.71</td><td>yes</td></tr>
+</table>
+
+<h2>Conclusions &amp; what shipped</h2>
+<ul>
+  <li><b>Keep the gated verify step.</b> Removing it (lean) or leaving it un-gated (old) each fabricated an entirely different kitchen in 1 of 2 runs. The confirm-only check costs ~30–60s and is the difference between a product and a slot machine.</li>
+  <li><b>Ship the tuned enhance instruction.</b> It was the only variant to go 3-for-3 on fidelity, produced the most neutral white balance, and its median time (~180s) matches prod. Now live in <code>buildPrompt()</code> in <code>lib/config.ts</code>: professional-photo-editor framing, explicit color-cast neutralization, shadow lift without crushed highlights, fixture de-glare, deblur/denoise, texture preservation.</li>
+  <li><b>Reject lean.</b> 40–60s faster, but with no check on the output a rogue generation ships directly to a paying customer.</li>
+  <li><b>Expected production time for “Fix lighting”:</b> ~3 minutes typical (168–217s observed), with an occasional slow agent — the 10-minute <code>maxDuration</code> cap and credit refund already handle the stall case.</li>
+  <li><b>Dimension lock verified again:</b> all 10 raw artifacts came back 1536×1024; every delivered file was locked to exactly 1170×864.</li>
+</ul>
+
+<footer>
+  Staged. — kitchen enhance lab, July 2026. 10 live renders on Cursor Cloud Agents (<code>composer-2.5</code>, repo-less). Harness: <code>experiments/kitchen-enhance-lab/run.mjs</code>; raw timings in <code>runs/timings.json</code>.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,379 @@
+[
+  {
+    "variant": "lean",
+    "run": 1,
+    "agentId": "bc-0627b64a-7c7b-467c-bb94-07df4766f014",
+    "ok": true,
+    "totalSec": 108,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2366
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5554
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 15061
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 107601
+      },
+      {
+        "label": "artifact available",
+        "atMs": 107601
+      },
+      {
+        "label": "delivered",
+        "atMs": 107970
+      }
+    ],
+    "file": "lean-run1.jpg"
+  },
+  {
+    "variant": "lean",
+    "run": 2,
+    "agentId": "bc-95b676e7-d78e-4115-a1bd-a849fa6c6d00",
+    "ok": true,
+    "totalSec": 138.4,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2233
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5495
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 14976
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 138066
+      },
+      {
+        "label": "artifact available",
+        "atMs": 138066
+      },
+      {
+        "label": "delivered",
+        "atMs": 138432
+      }
+    ],
+    "file": "lean-run2.jpg"
+  },
+  {
+    "variant": "tuned",
+    "run": 1,
+    "agentId": "bc-c68ef3f1-a125-48e0-8b51-a5fad6e46552",
+    "ok": true,
+    "totalSec": 308.6,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 3034
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 6278
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 16329
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 308220
+      },
+      {
+        "label": "artifact available",
+        "atMs": 308220
+      },
+      {
+        "label": "delivered",
+        "atMs": 308639
+      }
+    ],
+    "file": "tuned-run1.jpg"
+  },
+  {
+    "variant": "tuned",
+    "run": 2,
+    "agentId": "bc-fff6f28f-36ec-4ff5-94fa-cfeeeb6f425c",
+    "ok": true,
+    "totalSec": 180,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2213
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5431
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 15406
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 179532
+      },
+      {
+        "label": "artifact available",
+        "atMs": 179533
+      },
+      {
+        "label": "delivered",
+        "atMs": 179953
+      }
+    ],
+    "file": "tuned-run2.jpg"
+  },
+  {
+    "variant": "old",
+    "run": 1,
+    "agentId": "bc-fffb0e61-b13c-4367-9b6f-6cdf1ab996da",
+    "ok": true,
+    "totalSec": 296.1,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2291
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 7455
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 17867
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 295630
+      },
+      {
+        "label": "artifact available",
+        "atMs": 295631
+      },
+      {
+        "label": "delivered",
+        "atMs": 296051
+      }
+    ],
+    "file": "old-run1.jpg"
+  },
+  {
+    "variant": "old",
+    "run": 2,
+    "agentId": "bc-b6faba38-c7bc-4f8a-88c7-7cfef1bb3cde",
+    "ok": true,
+    "totalSec": 474.4,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2310
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 7472
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 17876
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 473870
+      },
+      {
+        "label": "artifact available",
+        "atMs": 473870
+      },
+      {
+        "label": "delivered",
+        "atMs": 474381
+      }
+    ],
+    "file": "old-run2.jpg"
+  },
+  {
+    "variant": "prod",
+    "run": 1,
+    "agentId": "bc-0cd1c195-807d-4dc9-b682-67219ea85c8b",
+    "ok": true,
+    "totalSec": 168.3,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 3129
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 6355
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 19933
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 167916
+      },
+      {
+        "label": "artifact available",
+        "atMs": 167916
+      },
+      {
+        "label": "delivered",
+        "atMs": 168300
+      }
+    ],
+    "file": "prod-run1.jpg"
+  },
+  {
+    "variant": "prod",
+    "run": 2,
+    "agentId": "bc-b2937ee5-470c-4622-805e-c6c6a6db7c60",
+    "ok": false,
+    "totalSec": 603.8,
+    "error": "no artifact (last status RUNNING)",
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2194
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5400
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 15036
+      }
+    ]
+  },
+  {
+    "variant": "prod",
+    "run": 3,
+    "agentId": "bc-85c23d83-93ed-4ed6-8c9c-8e92dd8b4f65",
+    "ok": false,
+    "totalSec": 603.8,
+    "error": "no artifact (last status RUNNING)",
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2364
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5603
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 8798
+      }
+    ]
+  },
+  {
+    "variant": "tuned",
+    "run": 3,
+    "agentId": "bc-81a388da-51da-4122-9352-7f2780b87286",
+    "ok": true,
+    "totalSec": 179.3,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2348
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5582
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 8812
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 178913
+      },
+      {
+        "label": "artifact available",
+        "atMs": 178913
+      },
+      {
+        "label": "delivered",
+        "atMs": 179333
+      }
+    ],
+    "file": "tuned-run3.jpg"
+  },
+  {
+    "variant": "prod",
+    "run": 4,
+    "agentId": "bc-c62b226c-8a15-45fc-a90b-4ea2da4fb5a2",
+    "ok": true,
+    "totalSec": 216.7,
+    "rawDimensions": "1536x1024",
+    "deliveredDimensions": "1170x864",
+    "matchesInput": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2405
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5613
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 9017
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 216327
+      },
+      {
+        "label": "artifact available",
+        "atMs": 216327
+      },
+      {
+        "label": "delivered",
+        "atMs": 216731
+      }
+    ],
+    "file": "prod-run4.jpg"
+  }
+]
