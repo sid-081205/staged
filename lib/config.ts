@@ -252,11 +252,10 @@ export function sanitizeExtraPrompt(extra?: string | null): string {
 }
 
 /**
- * The instruction handed to the image model. Every mode is phrased as an
- * in-place EDIT of the attached photo: the room's architecture, camera angle
- * and window views must survive the edit untouched. Free-text requests are
- * honored literally (a grand piano means a grand piano) but can never override
- * the architecture rules.
+ * The instruction handed to the image model. Hard-negatives framing (from
+ * prompt-lab variant C): explicit DO NOT list for architecture, plus a narrow
+ * allow-list of what may change per service. Free-text requests are honored
+ * literally but can never override the architecture rules.
  */
 export function buildPrompt(
   service: ServiceKey,
@@ -270,17 +269,23 @@ export function buildPrompt(
     ? ` The client added a specific request: "${extraClean}". Follow it literally. If it names a specific item (for example a grand piano), include exactly that item at the correct real-world scale; never substitute a similar item. The request never permits changing the room's architecture, walls, windows, doors or camera angle.`
     : "";
 
-  const preserve =
-    "PRESERVE EXACTLY, PIXEL-FAITHFUL TO THE ORIGINAL PHOTO: the camera position, camera angle and framing; every wall and its color; every window with its exact frame style, number of panes and the exact view through the glass; every door, radiator, vent, outlet and light fixture; the flooring material and plank direction; the ceiling and all trim. Do not add, remove, move or resize any of these. If the original has one window with three panes, the result has that same window with three panes.";
+  const hardConstraints = [
+    "HARD CONSTRAINTS — violating any of these fails the task:",
+    "DO NOT change window frames, mullions, pane count, glass reflections, or the outdoor view.",
+    "DO NOT change wall color, floor material, ceiling, trim, doors, radiators, vents, outlets, or built-in fixtures.",
+    "DO NOT change camera position, focal length, perspective, or crop.",
+    "DO NOT rebuild, restyle, or 'improve' the architecture.",
+    `DO NOT replace the ${roomLabel} with a similar-looking room or any other room type.`,
+  ].join(" ");
 
   if (service === "enhance") {
     return (
       [
-        `TASK: professionally re-edit this real estate photo of a ${roomLabel}, exactly the way a listing photo editor would. This is a photo EDIT of the attached image, not a new image.`,
+        `Image-to-image EDIT of the attached real estate photo of a ${roomLabel}. Only photographic quality may change — not objects or architecture.`,
         "Correct the exposure and white balance, brighten dark areas naturally, recover washed out windows, and make the light feel bright and inviting. If sky is visible through windows, make it a pleasant blue sky. Straighten the image if it is slightly tilted.",
-        "Do not add, remove or move any furniture or objects. Every physical thing in the photo stays exactly where it is. Only the photographic quality changes.",
-        preserve,
-        "The result must look like the same photo shot by a professional real estate photographer with proper HDR technique. Photorealistic, natural, not over processed.",
+        "DO NOT add, remove or move any furniture or objects. Every physical thing stays exactly where it is.",
+        hardConstraints,
+        "The result must look like the same photo shot by a professional real estate photographer with proper HDR technique. Photorealistic, natural, not over processed. No people, no text, no watermark.",
       ].join(" ") + extraLine
     );
   }
@@ -288,10 +293,11 @@ export function buildPrompt(
   if (service === "declutter") {
     return (
       [
-        `TASK: edit this real estate photo of a ${roomLabel} by removing all furniture, decor, rugs, occupant curtains and personal items, leaving the room completely empty. This is a photo EDIT of the attached image, not a new image.`,
+        `Image-to-image EDIT of the attached real estate photo of a ${roomLabel}. Remove furniture, decor, rugs, occupant curtains and personal items, leaving the room empty.`,
         "Plausibly reconstruct the flooring, walls and skirting where items were removed, matching the surrounding surfaces.",
-        preserve,
-        "The result must look like a professional real estate photograph of the exact same room, now empty.",
+        hardConstraints,
+        "Only pixels that change should be removed clutter and the reconstructed surfaces behind them.",
+        "The result must look like a professional real estate photograph of the exact same room, now empty. Photorealistic. No people, no text, no watermark.",
       ].join(" ") + extraLine
     );
   }
@@ -304,13 +310,14 @@ export function buildPrompt(
 
   return (
     [
-      `TASK: virtually stage this real estate photo of a ${roomLabel} by ADDING furniture into the attached photo. This is a photo EDIT: start from the attached image and place furniture into it. Do not invent, redraw or substitute a different room.`,
-      preserve,
-      `Into that unchanged space, add realistic, correctly scaled ${STYLES[styleKey].prompt}.`,
+      `Image-to-image EDIT of the attached real estate photo of a ${roomLabel}. Insert furniture only — do not invent or substitute a different room.`,
+      `Add realistic, correctly scaled ${STYLES[styleKey].prompt}.`,
       `Arrange the pieces naturally for a ${roomLabel}, respecting walkways and the room's real proportions. The finished room MUST be furnished; never return an empty or nearly empty room.`,
-      "Match the original photo's lighting direction, shadows, white balance and perspective so every added piece looks genuinely present in the room, with correct contact shadows on the existing floor.",
+      hardConstraints,
+      "Only new pixels should be furniture and soft decor sitting on the EXISTING floor with correct contact shadows.",
+      "Match the original photo's lighting direction, shadows, white balance and perspective so every added piece looks genuinely present in the room.",
       situation,
-      "The result must look like a professional real estate photograph of the exact same room, now professionally staged. Photorealistic. No people, no text, no watermark.",
+      "Photorealistic. No people, no text, no watermark.",
     ].join(" ") + extraLine
   );
 }

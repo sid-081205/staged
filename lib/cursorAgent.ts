@@ -81,7 +81,7 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
     "",
     prompt,
     "",
-    "Step 3: VERIFY before delivering. Open the generated image and compare it against the original photo. It passes only if the camera angle, windows (same frames, same panes, same view), walls, doors, radiators, flooring and ceiling are the same as the original. If anything structural changed, or a specifically requested item is missing or wrong, DO NOT deliver it: generate again (repeating that the output must be a faithful edit of the reference photo and correcting what went wrong). At most 2 generation attempts; deliver the more faithful result.",
+    "Step 3: VERIFY before delivering. Open the generated image and compare it against the original photo. It fails (regenerate) if ANY of these changed: window frames/panes/outdoor view, wall color, floor, ceiling, trim, doors, radiators, vents, built-ins, camera position, perspective, or crop — or if the room was replaced/restyled. If a specifically requested item is missing or wrong, regenerate correcting that. At most 2 generation attempts; deliver the more faithful result.",
     "",
     "Step 4: Save ONLY the final approved image into the artifacts directory at the workspace root (a filename ending in .png or .jpg). Never place a rejected image in artifacts. Keep rejected attempts outside the artifacts directory.",
     "Step 5: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR.",
