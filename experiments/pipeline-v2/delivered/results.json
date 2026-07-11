@@ -1,0 +1,53 @@
+{
+  "target": "1024x1536",
+  "results": [
+    {
+      "file": "declutter_v0_naive.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "declutter_v2_hardneg.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "enhance_v2_hardneg.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "stage_v0_naive.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "stage_v1_no_aspect_lock.png",
+      "rawDimensions": "1536x1024",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "stage_v2_hardneg.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "stage_v2_retry_corrected.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    },
+    {
+      "file": "stage_v3_minimal.png",
+      "rawDimensions": "1024x1536",
+      "deliveredDimensions": "1024x1536",
+      "matchesInput": true
+    }
+  ]
+}

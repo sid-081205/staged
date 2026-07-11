@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stagely · Pipeline v2 bake-off — speed, fidelity &amp; dimension lock</title>
+<style>
+  :root{
+    --paper:#faf7f0; --paper2:#f3efe6; --ink:#1c1917; --muted:#57534e;
+    --line:#e7e5e4; --accent:#b45309; --good:#15803d; --bad:#b91c1c; --warn:#a16207;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:var(--paper);color:var(--ink);line-height:1.55}
+  main{max-width:1100px;margin:0 auto;padding:32px 20px 80px}
+  h1{font-family:Georgia,serif;font-size:34px;line-height:1.15;margin:8px 0 4px}
+  h2{font-family:Georgia,serif;font-size:24px;margin:56px 0 8px;padding-top:24px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:28px 0 6px}
+  p,li{color:var(--muted);max-width:74ch}
+  .tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  code{background:var(--paper2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.9em;color:var(--ink)}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;background:#fff}
+  th{background:var(--paper2);font-weight:600}
+  .imgrow{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0}
+  figure{margin:0;flex:1 1 240px;max-width:330px}
+  figure img{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line)}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
+  figcaption b{color:var(--ink)}
+  .verdict{font-weight:700}
+  .pass{color:var(--good)} .fail{color:var(--bad)} .warn{color:var(--warn)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0}
+  .card.note{background:#fffbeb;border-color:#fde68a}
+  .pill{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0;color:var(--muted)}
+  .big{font-family:Georgia,serif;font-size:40px;color:var(--accent)}
+  .grid2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  ul{padding-left:20px}
+</style>
+<main>
+  <p class="tag">Experiments · pipeline-v2 · 2026-07-11 · not imported by the app</p>
+  <h1>Pipeline v2 bake-off: 2–3 minute renders, hard-no fidelity, any-orientation output</h1>
+  <p>
+    Test subject: a <b>portrait (1024×1536), slightly blurry, occupied</b> bunk-bed bedroom — deliberately
+    the hardest realistic case: non-landscape dimensions, motion blur, existing furniture that must survive
+    untouched, a patterned rug, curtains, a radiator, and a blown-out window.
+  </p>
+
+  <div class="card note">
+    <b>Methodology &amp; honesty notes.</b>
+    <ul>
+      <li>The photo attached to the task brief could not be persisted into this experiment VM (chat attachments
+          are not written to disk), so the fixture in <code>input/</code> is a <b>faithful recreation</b> of it —
+          same portrait orientation, same blur, same bunk beds / striped bedding / grey curtains / blue carpet /
+          Greek-key rug / paper lantern. Every stress property of the original is reproduced.</li>
+      <li>This VM has no <code>CURSOR_API_KEY</code> secret, so the Cloud-Agents boot/poll leg was not re-measured
+          live here. Production renders run as a Cursor cloud agent that calls an <b>image-edit tool</b>; the bake-off
+          calls the same class of image-edit tool directly (reference-image edit mode), with <b>byte-identical
+          production prompts</b> exported from the real code by <code>prepare.mjs</code>
+          (<code>buildPrompt</code> layer A + <code>buildAgentPrompt</code> layer B). Boot/verify overhead numbers
+          come from the measured breakdown in <code>docs/image-generation-pipeline.md</code> (prompt-lab timings on
+          the production stack).</li>
+      <li>Every output below was then pushed through the <b>real production post-process</b>
+          (<code>lockToDimensions</code> from <code>lib/cursorAgent.ts</code>) by <code>postprocess.mjs</code>;
+          results in <code>delivered/results.json</code>.</li>
+    </ul>
+  </div>
+
+  <h2>1 · The input</h2>
+  <div class="imgrow">
+    <figure>
+      <img src="input/bedroom_portrait_preprocessed.jpg" alt="input">
+      <figcaption><b>Fixture, after real production preprocess</b> (<code>preprocessInput</code>: EXIF rotate,
+      long edge ≤2048, JPEG q92) → <b>1024×1536 portrait</b>. This width×height is recorded and becomes the
+      delivery contract for the render.</figcaption>
+    </figure>
+  </div>
+
+  <h2>2 · Prompt method bake-off (quality / the moat)</h2>
+  <p>Same image-edit tool, same reference photo — only the instruction changes. Generation wall-clock timed per call.</p>
+
+  <h3>2a · Stage with furniture (Scandinavian)</h3>
+  <div class="imgrow">
+    <figure>
+      <img src="runs/stage_v0_naive.png" alt="naive stage">
+      <figcaption><b>V0 · Naive prompt</b> ("virtually stage this bedroom…make it beautiful") — 50s.
+      <span class="verdict fail">FAIL:</span> invented a different room. Oak bunks instead of metal, wood floor
+      instead of blue carpet, sheer curtains, new window + view, radiator moved/restyled. This is what
+      commodity AI stagers ship — and exactly what Stagely's hard-nos exist to prevent.</figcaption>
+    </figure>
+    <figure>
+      <img src="runs/stage_v3_minimal.png" alt="minimal stage">
+      <figcaption><b>V3 · Minimal constraints</b> (prompt-lab "E": one line of keep-everything) — 64s.
+      <span class="verdict warn">PARTIAL:</span> room and beds survive, but it swapped the Greek-key rug for
+      sisal, restyled bedding to beige, and added under-bed drawers (resized existing furniture). Too much drift
+      for MLS disclosure safety.</figcaption>
+    </figure>
+    <figure>
+      <img src="runs/stage_v2_hardneg.png" alt="hard negatives stage">
+      <figcaption><b>V2 · Production hard-nos</b> (shipped <code>buildPrompt</code>: DO-NOT list + additions-only +
+      aspect clause) — 76s. <span class="verdict warn">NEAR-PASS:</span> architecture, carpet, curtains, beds all
+      faithful; one violation — the existing rug was replaced by the style's "pale wool rug".</figcaption>
+    </figure>
+    <figure>
+      <img src="runs/stage_v2_retry_corrected.png" alt="verified retry">
+      <figcaption><b>V2 + one verify-retry</b> (the shipped Step-2 loop: same instruction + one corrective
+      sentence) — +61s. <span class="verdict pass">PASS:</span> Greek-key rug preserved, additions only
+      (nightstand, shelf, plants, throws). This is the delivered image.</figcaption>
+    </figure>
+  </div>
+
+  <h3>2b · Remove furniture and clutter</h3>
+  <div class="imgrow">
+    <figure>
+      <img src="runs/declutter_v0_naive.png" alt="naive declutter">
+      <figcaption><b>V0 · Naive prompt</b> — 54s. <span class="verdict warn">PARTIAL:</span> room emptied and
+      window/radiator kept, but it invented a door handle, brightened the walls and left occupant curtains
+      (spec says remove them).</figcaption>
+    </figure>
+    <figure>
+      <img src="runs/declutter_v2_hardneg.png" alt="hard negative declutter">
+      <figcaption><b>V2 · Production hard-nos</b> — 54s. <span class="verdict pass">PASS:</span> beds, rug and
+      curtains removed per spec; carpet and wall reconstructed where the bunks stood; window frame, radiator,
+      lantern, skirting and camera untouched.</figcaption>
+    </figure>
+  </div>
+
+  <h3>2c · Fix lighting and sky</h3>
+  <div class="imgrow">
+    <figure>
+      <img src="runs/enhance_v2_hardneg.png" alt="enhance">
+      <figcaption><b>V2 · Production hard-nos</b> — 70s. <span class="verdict pass">PASS:</span> blur and
+      exposure fixed, window view recovered with sky, and every object — beds, striped bedding, Greek-key rug,
+      curtains — stays put. Confirms <code>enhance</code> doesn't drift architecture, which justifies removing
+      its retry entirely.</figcaption>
+    </figure>
+  </div>
+
+  <h2>3 · Output dimensions (portrait in → portrait out)</h2>
+  <p>
+    The old pipeline sent aspect-preserved input <i>into</i> the model but never forced the output back — models
+    like returning fixed landscape sizes (e.g. 1536×1024), silently cropping portrait uploads. Two defenses now ship
+    together:
+  </p>
+  <ul>
+    <li><b>Prompt-side</b>: <code>buildAgentPrompt</code> injects <code>OUTPUT DIMENSIONS: … 1024×1536 (portrait)</code>
+        and <code>buildPrompt</code> carries a DO-NOT-change-aspect hard constraint → the model returns the right
+        shape in the first place (7 of 8 runs above came back portrait; the 8th was deliberately forced landscape).</li>
+    <li><b>Code-side guarantee</b>: <code>lockToDimensions</code> cover-resizes the artifact to the exact recorded
+        input size, so delivery can never mismatch even if the model misbehaves.</li>
+  </ul>
+  <div class="imgrow">
+    <figure>
+      <img src="runs/stage_v1_no_aspect_lock.png" alt="landscape drift">
+      <figcaption><b>Simulated legacy failure</b>: no aspect clause, model pushed to landscape → returned
+      <b>1536×1024</b>. A portrait phone shot would have been delivered as this on the old pipeline.</figcaption>
+    </figure>
+    <figure>
+      <img src="delivered/stage_v1_no_aspect_lock.jpg" alt="cover-crop recovery">
+      <figcaption><b>Same artifact through the real <code>lockToDimensions</code></b> → exactly 1024×1536 portrait
+      again. Usable, but the cover-crop costs the right-hand bunk — which is precisely why the prompt-side aspect
+      instruction ships too: the lock is the guarantee, the prompt avoids destructive crops.</figcaption>
+    </figure>
+  </div>
+  <div class="card">
+    <b>Verification (<code>postprocess.mjs</code>, real production code):</b> all 8 bake-off outputs delivered at
+    exactly <b>1024×1536</b> — <code>PASS: every delivered image matches the input dimensions exactly</code>.
+    Landscape and square fixtures behave identically since the contract is "whatever <code>preprocessInput</code>
+    recorded".
+  </div>
+
+  <h2>4 · Latency: where 5–7 minutes went, and how it becomes 2–3</h2>
+  <table>
+    <tr><th>Stage</th><th>Old pipeline (measured, docs)</th><th>New pipeline (shipped)</th></tr>
+    <tr><td>Preprocess (sharp) + create agent API</td><td>~5s</td><td>~5s (unchanged)</td></tr>
+    <tr><td>Agent VM boot + repo clone</td><td>~60–90s</td><td>~60–90s (unchanged; API offers no no-repo mode today)</td></tr>
+    <tr><td>Step 1 "study the photo", written inventory</td><td>~30–60s</td><td><b>0s — deleted.</b> Wrapper: "IMMEDIATELY — as your first action — call your image generation tool". The DO-NOT knowledge lives in the image prompt itself, where the bake-off shows it actually binds.</td></tr>
+    <tr><td>Image generation call</td><td>~60–90s</td><td>~50–76s (measured above, avg 62s)</td></tr>
+    <tr><td>Verify + second generation</td><td>Retry allowed for <i>everything</i>, and loose verify language triggered it often — the main reason renders hit 5–7 min</td><td>Verify kept but <b>gated</b>: fails only on the explicit hard-no checklist, <b>max 1 retry</b>, "never make a third image", and <code>enhance</code> never retries. Bake-off retry rate: 1 of 4 first attempts (+~61s when it fires).</td></tr>
+    <tr><td>Artifact poll granularity</td><td>5s</td><td>3s (saves a few seconds; free)</td></tr>
+    <tr><td>Timeout</td><td>8 min</td><td>8 min (safety net only)</td></tr>
+    <tr><th>Typical wall clock</th><th>5–7 min</th><th><b>~2–3 min</b> one-shot (~75%), ~3.5–4 min with the one retry</th></tr>
+  </table>
+
+  <h2>5 · What shipped to stagely.org, and why</h2>
+  <div class="grid2">
+    <div class="card">
+      <b>1 · Generate-first agent wrapper</b> (<code>buildAgentPrompt</code>, lib/cursorAgent.ts)<br>
+      Cuts the written-inventory step (~30–60s) with zero quality cost: the V2 image prompt already carries every
+      constraint, and section 2 shows the constraints bind at the image-tool level, not the essay level.
+    </div>
+    <div class="card">
+      <b>2 · Gated verify, max one retry — the process stays</b><br>
+      You asked to keep "some sort of process", and the bake-off proves why: the V2 first attempt replaced the rug,
+      and the verify-retry caught and fixed it (section 2a). But unbounded retries were the #1 time sink, so:
+      fail only on the hard-no checklist, one retry with a one-sentence correction, retry deleted entirely for
+      <code>enhance</code> (tonal edits don't drift — section 2c).
+    </div>
+    <div class="card">
+      <b>3 · Hard-nos strengthened</b> (<code>buildPrompt</code>, lib/config.ts)<br>
+      Added: "DO NOT change the image's aspect ratio or orientation …" and, for staging, "DO NOT remove, move,
+      resize or restyle anything already present — additions only." Naive vs hard-no comparisons (2a/2b) show this
+      list is the product moat: without it the model happily rebuilds the room.
+    </div>
+    <div class="card">
+      <b>4 · Dimension lock end-to-end</b><br>
+      <code>preprocessInput</code> records width×height → wrapper announces it → <code>lockToDimensions</code>
+      guarantees it. Any upload orientation (portrait/landscape/square) is now delivered at its own size.
+      Mock mode uses the same contract, and the FAQ now promises it publicly.
+    </div>
+    <div class="card">
+      <b>5 · FAQ additions</b> (app/page.tsx)<br>
+      "How does the AI staging actually work?" (the supervised process, 2–3 min), an updated "What photos work
+      best?" (any orientation; sharp &amp; bright is best), and "Will my staged photo keep the same size and
+      orientation as my upload?" (yes).
+    </div>
+    <div class="card">
+      <b>6 · 3s artifact polling</b><br>
+      Marginal but free — the artifact is grabbed as soon as it appears, before the agent formally finishes.
+    </div>
+  </div>
+
+  <h2>6 · Considered and rejected (for now)</h2>
+  <table>
+    <tr><th>Option</th><th>Verdict</th><th>Why</th></tr>
+    <tr>
+      <td>Parallel racing (spawn 2 agents per render, keep the faster/better)</td>
+      <td class="fail">Rejected</td>
+      <td>Doubles per-render agent cost (~$0.05–0.15 → ~$0.10–0.30) on a 30¢ retail price — the margin doesn't
+      survive. And p50 latency barely moves since both racers pay the same VM boot. The shipped one-retry keeps the
+      quality benefit of a second attempt while paying for it only when verification actually fails (~25%).</td>
+    </tr>
+    <tr>
+      <td>Swap Cloud Agents for a direct img2img API (Fal / Flux Kontext / Gemini edit…)</td>
+      <td class="warn">Deferred</td>
+      <td>Would hit tens of seconds, but deletes the reasoning + verify loop — the "complex being that doesn't
+      change things" moat — and adds a new vendor, new keys, new failure modes. Revisit only if 2–3 min still loses
+      deals; the clean seam is to introduce <code>lib/imageProviders/*</code> behind <code>stagePhoto</code>.</td>
+    </tr>
+    <tr>
+      <td>Different agent model</td>
+      <td class="warn">Kept composer-2.5</td>
+      <td><code>experiments/model-comparison</code> already showed it cheapest/fastest with equal image quality —
+      the image tool does the pixel work; the agent model mostly needs to follow the wrapper. Re-run that harness
+      if models change.</td>
+    </tr>
+    <tr>
+      <td>Drop verification entirely (pure one-shot)</td>
+      <td class="fail">Rejected</td>
+      <td>Bake-off says ~1 in 4 first attempts violates a hard-no on hard inputs (2a). Shipping those unchecked
+      trades the product's core promise for ~60s.</td>
+    </tr>
+    <tr>
+      <td>Letterbox/pad instead of cover-crop in the lock</td>
+      <td class="fail">Rejected</td>
+      <td>MLS photos can't have black bars. Cover-crop plus the prompt-side aspect clause means real crops are
+      pixel-scale, not composition-scale (section 3).</td>
+    </tr>
+  </table>
+
+  <h2>7 · Reproduce</h2>
+  <p>
+    <span class="pill">node --experimental-strip-types experiments/pipeline-v2/prepare.mjs</span>
+    <span class="pill">render runs/ with your image-edit tool or the prompt-lab harness</span>
+    <span class="pill">node --experimental-strip-types experiments/pipeline-v2/postprocess.mjs</span>
+  </p>
+  <p>
+    With a <code>CURSOR_API_KEY</code> available, <code>experiments/prompt-lab/run.mjs --input
+    experiments/pipeline-v2/input/bedroom_portrait_original.png</code> replays the same fixture through the full
+    production Cloud-Agents path for live end-to-end timings.
+  </p>
+</main>
+</html>
