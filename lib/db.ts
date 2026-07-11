@@ -232,6 +232,49 @@ export function deleteJob(jobId: string): void {
 }
 
 /**
+ * Deletes one uploaded photo and every render generated from it (DB rows + files).
+ * Refunds credits / free previews for any still-processing renders.
+ * Returns the deleted render ids so callers can clear UI trackers.
+ */
+export function deletePhoto(photoId: string): { jobId: string; renderIds: string[] } | null {
+  const photo = getPhoto(photoId);
+  if (!photo) return null;
+  const job = getJob(photo.job_id);
+
+  const renders = db
+    .prepare("SELECT id, output_path, status, paid FROM renders WHERE photo_id = ?")
+    .all(photoId) as {
+    id: string;
+    output_path: string | null;
+    status: string;
+    paid: number;
+  }[];
+
+  for (const r of renders) if (r.output_path) fs.rmSync(r.output_path, { force: true });
+  if (photo.original_path) fs.rmSync(photo.original_path, { force: true });
+
+  const tx = db.transaction(() => {
+    if (job?.user_id) {
+      for (const r of renders) {
+        if (r.status !== "processing") continue;
+        if (r.paid === 1) {
+          db.prepare("UPDATE users SET credits = credits + 1 WHERE id = ?").run(job.user_id);
+        } else {
+          db.prepare(
+            "UPDATE users SET free_used = free_used - 1 WHERE id = ? AND free_used > 0"
+          ).run(job.user_id);
+        }
+      }
+    }
+    db.prepare("DELETE FROM renders WHERE photo_id = ?").run(photoId);
+    db.prepare("DELETE FROM photos WHERE id = ?").run(photoId);
+  });
+  tx();
+
+  return { jobId: photo.job_id, renderIds: renders.map((r) => r.id) };
+}
+
+/**
  * Looks up renders by id but only returns the ones owned by `userId`. Powers
  * the background-progress widget's status polling.
  */

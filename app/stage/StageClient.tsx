@@ -338,6 +338,11 @@ export default function StageClient() {
           autoReviewId={reviewId}
           renders={job.renders.filter((r) => r.photoId === photo.id)}
           onGenerate={generate}
+          onDeleted={async () => {
+            const state = await refresh(job.id);
+            await refreshUser();
+            return state;
+          }}
         />
       ))}
 
@@ -388,6 +393,7 @@ function PhotoCard({
   autoReviewId,
   renders,
   onGenerate,
+  onDeleted,
 }: {
   photoId: string;
   withLabel: boolean;
@@ -401,12 +407,14 @@ function PhotoCard({
     roomType: RoomKey,
     extraPrompt: string
   ) => Promise<void>;
+  onDeleted: () => Promise<JobState | null>;
 }) {
   const [service, setService] = useState<ServiceKey>("stage");
   const [style, setStyle] = useState<StyleKey>("modern");
   const [room, setRoom] = useState<RoomKey>("living");
   const [extra, setExtra] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [compare, setCompare] = useState<RenderInfo | null>(null);
   // The review id must open the modal exactly once. Without this guard the
   // effect re-fires on every poll refresh (renders is a fresh array each
@@ -438,6 +446,29 @@ function PhotoCard({
     }
   }
 
+  async function removePhoto() {
+    if (
+      !window.confirm(
+        "Delete this photo and all renders made from it? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/photos/${photoId}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not delete photo.");
+      for (const id of (data.renderIds as string[] | undefined) ?? []) {
+        removeTracked(id);
+      }
+      await onDeleted();
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Could not delete photo.");
+      setDeleting(false);
+    }
+  }
+
   const buttonLabel = busy
     ? "Working, runs in the background"
     : service === "declutter"
@@ -452,12 +483,22 @@ function PhotoCard({
     <section className="mt-10 overflow-hidden rounded-3xl border border-line">
       <div className="grid gap-0 md:grid-cols-[320px_1fr]">
         <div className="border-b border-line md:border-b-0 md:border-r">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/api/image/${photoId}?kind=original`}
-            alt="Original room"
-            className="aspect-[4/3] w-full object-cover"
-          />
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/image/${photoId}?kind=original`}
+              alt="Original room"
+              className="aspect-[4/3] w-full object-cover"
+            />
+            <button
+              type="button"
+              onClick={removePhoto}
+              disabled={deleting}
+              className="absolute right-3 top-3 rounded-lg border border-ink/20 bg-paper/95 px-2.5 py-1.5 text-xs text-muted shadow-sm transition-colors hover:border-ink hover:text-ink disabled:opacity-50"
+            >
+              {deleting ? "Deleting…" : "Delete photo"}
+            </button>
+          </div>
           <div className="space-y-3 p-4">
             <label className="block text-sm">
               <span className="text-muted">What do you need?</span>
@@ -520,7 +561,7 @@ function PhotoCard({
             </label>
             <button
               onClick={submit}
-              disabled={busy || disabled}
+              disabled={busy || disabled || deleting}
               className="w-full rounded-xl border border-ink bg-ink px-4 py-2.5 text-paper transition-colors hover:bg-transparent hover:text-ink disabled:opacity-50"
             >
               {buttonLabel}
@@ -572,10 +613,10 @@ function PhotoCard({
             {processing.map((r) => (
               <div key={r.id} className="overflow-hidden rounded-2xl border border-line">
                 <div className="flex aspect-[4/3] w-full animate-pulse items-center justify-center bg-paper-2">
-                  <span className="text-sm text-muted">Working…</span>
+                  <span className="text-sm text-muted">Takes 2–3 minutes…</span>
                 </div>
                 <div className="px-3 py-2 text-xs text-muted">
-                  {modeLabel(r.style)} · runs in background
+                  {modeLabel(r.style)} · we&rsquo;ll notify you when done
                 </div>
               </div>
             ))}

@@ -90,6 +90,11 @@ export default function RenderTracker() {
                   <p className="font-medium text-accent">Ready to review</p>
                 )}
                 {item.status === "failed" && <p className="font-medium">Render failed</p>}
+                {item.status === "processing" && (
+                  <p className="mt-0.5 text-muted">
+                    Takes 2–3 minutes. We&rsquo;ll notify you when it&rsquo;s done.
+                  </p>
+                )}
                 <p className="mt-0.5 truncate text-muted">
                   {roomLabel(item.roomType)} · {modeLabel(item.style)}
                 </p>

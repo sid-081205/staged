@@ -127,6 +127,11 @@ async function runRender(args: {
   const { renderId, userId, reservedCredit, inputPath, prompt, tag } = args;
   try {
     const output = await stagePhoto(inputPath, prompt, tag);
+    // Photo may have been deleted while we were generating.
+    const stillThere = db.prepare("SELECT id FROM renders WHERE id = ?").get(renderId);
+    if (!stillThere) {
+      return;
+    }
     const outputPath = path.join(OUTPUTS_DIR, `${renderId}.jpg`);
     fs.writeFileSync(outputPath, output);
     db.prepare("UPDATE renders SET status = 'done', output_path = ? WHERE id = ?").run(
@@ -134,6 +139,8 @@ async function runRender(args: {
       renderId
     );
   } catch (err) {
+    const stillThere = db.prepare("SELECT id FROM renders WHERE id = ?").get(renderId);
+    if (!stillThere) return;
     const message = err instanceof Error ? err.message : "Generation failed.";
     // Refund the reservation — the agent never produced an image.
     if (reservedCredit) {
