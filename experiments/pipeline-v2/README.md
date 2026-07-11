@@ -16,6 +16,10 @@ Contents:
 - `postprocess.mjs` — pushes every raw output through the real production
   `lockToDimensions`; fails if any delivered image mismatches the input size.
 - `delivered/` — final images + `results.json` dimension audit.
+- `live-timing.mjs` — LIVE end-to-end harness against the real Cloud Agents
+  API (needs `CURSOR_API_KEY`): old vs new wrapper, repo-less, `fast` param,
+  model override via `LIVE_MODEL`. Per-run wall clock + status timeline.
+- `runs-live/` — the 16 live renders + `timings.json` (2026-07-11 session).
 
 As with the other experiment folders: never import this from the Next app;
 promote winners into `lib/config.ts` / `lib/cursorAgent.ts` only.

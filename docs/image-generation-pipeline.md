@@ -28,8 +28,8 @@ Credits: packs via Stripe; 1 free watermarked preview per account. Renders run i
 Generation goes through the **Cursor Cloud Agents API** (`POST https://api.cursor.com/v1/agents`). That:
 
 1. Boots a Cursor-managed VM  
-2. Clones `CURSOR_REPO` (default `https://github.com/sid-081205/images`)  
-3. Runs model `CURSOR_MODEL` (default `composer-2.5`) as a **coding agent**  
+2. Runs repo-less by default (clones `CURSOR_REPO` only if set — live-tested 2026-07: identical speed/fidelity without a repo)  
+3. Runs model `CURSOR_MODEL` (default `claude-opus-4-8`, ~2x faster than `composer-2.5` per model-comparison + live timings) as a **coding agent**  
 4. Agent is instructed to call an **image-to-image / edit tool** inside that sandbox  
 5. We poll until an image appears in **artifacts**, download it, cancel/archive the agent  
 
@@ -89,8 +89,8 @@ sequenceDiagram
 | Variable | Purpose |
 | --- | --- |
 | `CURSOR_API_KEY` | Basic auth to `api.cursor.com` |
-| `CURSOR_REPO` | GitHub repo cloned into each agent (default `sid-081205/images`) |
-| `CURSOR_MODEL` | Agent model id (default `composer-2.5`) |
+| `CURSOR_REPO` | Optional; GitHub repo cloned into each agent. Empty/`none` = repo-less agents (default) |
+| `CURSOR_MODEL` | Agent model id (default `claude-opus-4-8`) |
 | `MOCK_GENERATION=1` | Skip Cursor; tinted sharp mock for local UI |
 
 ### Key constants ([`lib/cursorAgent.ts`](lib/cursorAgent.ts))
@@ -177,10 +177,10 @@ Ranked by impact vs risk. Hard-negatives in `buildPrompt` should stay unless a b
 
 ### A. Stay on Cloud Agents (smaller wins)
 
-1. **[SHIPPED 2026-07] Generate-first wrapper** — the agent's first action is the image tool call; no written scene inventory. Verify is kept but capped at ONE regeneration, and `enhance` never regenerates. See `buildAgentPrompt` in [`lib/cursorAgent.ts`](lib/cursorAgent.ts) and `experiments/pipeline-v2/` for the bake-off.
+1. **[SHIPPED 2026-07] Generate-first wrapper** — the agent's first action is the image tool call; no written scene inventory. Verify is kept but capped at ONE regeneration, and `enhance` never regenerates. See `buildAgentPrompt` in [`lib/cursorAgent.ts`](lib/cursorAgent.ts) and `experiments/pipeline-v2/` for the bake-off. Live-measured (2026-07): old wrapper avg 368s, new wrapper avg 236s on the same fixture/model.
 2. **[SHIPPED 2026-07] Faster polling** — 3s interval (was 5s).
-3. **Reduce repo overhead** — Investigate API options for no-repo / empty snapshot; cloning `images` every time is pure overhead for img2img.
-4. **Model / fast params** — If Cloud Agents supports `params` like `fast`, A/B in prompt-lab (`experiments/model-comparison`, `experiments/prompt-lab`).
+3. **[SHIPPED 2026-07] Repo-less agents** — `POST /v1/agents` accepts no `repos` field; live runs show identical speed/fidelity. `CURSOR_REPO` is now optional (empty/`none` = repo-less).
+4. **[SHIPPED 2026-07] Faster model** — default flipped to `claude-opus-4-8` (~2x faster per render than `composer-2.5` with best fidelity in model-comparison). The `fast` model param was live-tested and REJECTED: 1 of 3 runs produced a full room replacement and 1 of 3 timed out.
 
 ### B. Biggest win: direct image API
 

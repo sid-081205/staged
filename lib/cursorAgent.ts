@@ -4,10 +4,10 @@ import sharp from "sharp";
 /**
  * Image generation backed by the Cursor Cloud Agents API.
  *
- * Each render spins up a cloud agent linked to the workspace repo
- * (CURSOR_REPO), sends it the room photo + staging prompt, and asks it to
- * save the generated image into the agent's artifacts directory. We poll the
- * run until it finishes, then download the artifact via a presigned URL.
+ * Each render spins up a cloud agent (repo-less by default; linked to
+ * CURSOR_REPO if set), sends it the room photo + staging prompt, and asks it
+ * to save the generated image into the agent's artifacts directory. We poll
+ * the run until it finishes, then download the artifact via a presigned URL.
  *
  * Latency design (target: 2–3 min wall clock, was 5–7 min):
  * - The agent is told to call the image tool as its FIRST action — no
@@ -27,11 +27,20 @@ import sharp from "sharp";
  */
 
 const API = "https://api.cursor.com";
-const REPO = process.env.CURSOR_REPO || "https://github.com/sid-081205/images";
-// Which Cursor model runs the render. Override with CURSOR_MODEL in .env; run
-// `node experiments/model-comparison/run.mjs --list` to see valid ids, and the
-// harness in that folder to compare their image output.
-const MODEL = (process.env.CURSOR_MODEL || "composer-2.5").trim();
+// Repo the render agents are linked to. Optional: leave CURSOR_REPO unset (or
+// set it to "none") to run repo-less agents — live tests show identical speed
+// and fidelity, and it removes the connected-GitHub-repo requirement. Set a
+// repo URL to keep the old behavior.
+const REPO_RAW = (process.env.CURSOR_REPO || "").trim();
+const REPO = REPO_RAW && REPO_RAW.toLowerCase() !== "none" ? REPO_RAW : null;
+// Which Cursor model runs the render. Default is claude-opus-4-8: the
+// model-comparison harness measured it ~2x faster than composer-2.5 per stage
+// render (142–174s vs 314–378s) with the best architectural fidelity, which
+// is what puts typical renders inside the 2–3 minute target. Override with
+// CURSOR_MODEL in .env; `node experiments/model-comparison/run.mjs --list`
+// shows valid ids and the harness compares image output. Watch per-render
+// cost after model changes (see README unit economics).
+const MODEL = (process.env.CURSOR_MODEL || "claude-opus-4-8").trim();
 
 const POLL_INTERVAL_MS = 3_000;
 // Safety net only — typical renders should finish in 2–3 minutes now that the
@@ -167,7 +176,7 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
         images: [{ data: input.toString("base64"), mimeType: "image/jpeg" }],
       },
       model: { id: MODEL },
-      repos: [{ url: REPO, startingRef: "main" }],
+      ...(REPO ? { repos: [{ url: REPO, startingRef: "main" }] } : {}),
       autoCreatePR: false,
     }),
   });

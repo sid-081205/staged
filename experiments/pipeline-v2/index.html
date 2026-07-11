@@ -50,13 +50,11 @@
           are not written to disk), so the fixture in <code>input/</code> is a <b>faithful recreation</b> of it —
           same portrait orientation, same blur, same bunk beds / striped bedding / grey curtains / blue carpet /
           Greek-key rug / paper lantern. Every stress property of the original is reproduced.</li>
-      <li>This VM has no <code>CURSOR_API_KEY</code> secret, so the Cloud-Agents boot/poll leg was not re-measured
-          live here. Production renders run as a Cursor cloud agent that calls an <b>image-edit tool</b>; the bake-off
-          calls the same class of image-edit tool directly (reference-image edit mode), with <b>byte-identical
-          production prompts</b> exported from the real code by <code>prepare.mjs</code>
-          (<code>buildPrompt</code> layer A + <code>buildAgentPrompt</code> layer B). Boot/verify overhead numbers
-          come from the measured breakdown in <code>docs/image-generation-pipeline.md</code> (prompt-lab timings on
-          the production stack).</li>
+      <li>Sections 2–3 were produced before an API key was available: they call the same class of image-edit tool
+          the render agents invoke directly (reference-image edit mode), with <b>byte-identical production
+          prompts</b> exported from the real code by <code>prepare.mjs</code>. <b>Section 4 supersedes the timing
+          caveat</b>: a real <code>CURSOR_API_KEY</code> was later provided and 16 renders were measured live
+          through the actual Cloud Agents API on real agent VMs.</li>
       <li>Every output below was then pushed through the <b>real production post-process</b>
           (<code>lockToDimensions</code> from <code>lib/cursorAgent.ts</code>) by <code>postprocess.mjs</code>;
           results in <code>delivered/results.json</code>.</li>
@@ -166,7 +164,88 @@
     recorded".
   </div>
 
-  <h2>4 · Latency: where 5–7 minutes went, and how it becomes 2–3</h2>
+  <h2>4 · LIVE end-to-end runs through the real Cloud Agents API (2026-07-11, second session)</h2>
+  <div class="card">
+    <b>Update:</b> after the first version of this report, a real <code>CURSOR_API_KEY</code> was provided and the
+    full production path was measured live with <code>live-timing.mjs</code> — real agent VMs, real
+    <code>POST /v1/agents</code>, the exact production prompts and post-processing, on the same portrait bedroom
+    fixture. 16 live renders total (raw outputs in <code>runs-live/</code>, timings in
+    <code>runs-live/timings.json</code>). Runs within a variant were launched in parallel; each number is one
+    agent's own wall clock from create to delivered image.
+  </div>
+  <table>
+    <tr><th>Variant (model composer-2.5 unless noted)</th><th>Runs, wall clock</th><th>Avg</th><th>Fidelity on the occupied bunk room</th></tr>
+    <tr>
+      <td><b>OLD wrapper</b> (inventory step + un-gated retry, 5s poll)</td>
+      <td>244s · 463s · 396s</td><td class="fail"><b>368s (6.1 min)</b></td>
+      <td class="fail">0/3 — every run REPLACED the bunk beds with a staged double bed (old prompt lacked the
+      additions-only hard-no). Slow <i>and</i> unfaithful.</td>
+    </tr>
+    <tr>
+      <td><b>NEW wrapper (shipped)</b> — generate-first, gated 1-retry, dimension lock</td>
+      <td>277s · 184s · 248s</td><td><b>236s (3.9 min)</b></td>
+      <td class="pass">3/3 kept bunks, carpet, rug, radiator, window; additions only (minor curtain-tone drift in
+      two runs). All delivered exactly 1024×1536.</td>
+    </tr>
+    <tr>
+      <td><b>NEW wrapper, repo-less</b> (no <code>repos</code> field)</td>
+      <td>224s · 247s</td><td><b>236s (3.9 min)</b></td>
+      <td class="pass">2/2 faithful — identical to with-repo. Removes the connected-GitHub-repo requirement
+      entirely. <b>Shipped:</b> <code>CURSOR_REPO</code> is now optional.</td>
+    </tr>
+    <tr>
+      <td><b>NEW wrapper, <code>enhance</code></b> (no retry allowed)</td>
+      <td>349s · 187s</td><td><b>268s</b></td>
+      <td class="pass">2/2 perfect: blur fixed, sky recovered, every object untouched.</td>
+    </tr>
+    <tr>
+      <td><b><code>fast</code> model param</b> (composer-2.5 fast)</td>
+      <td>189s · 221s · 1 timeout &gt;10 min</td><td class="warn">205s when it works</td>
+      <td class="fail">1/3 produced a completely different room, 1/3 timed out. <b>Rejected.</b></td>
+    </tr>
+    <tr>
+      <td><b>v3 wrapper candidate</b> (verify without re-opening files)</td>
+      <td>317s · 285s · 215s</td><td class="warn">272s</td>
+      <td class="pass">3/3 faithful, but no speed win over the shipped wrapper — <b>not adopted</b> (sample
+      overlaps; extra wording buys nothing).</td>
+    </tr>
+  </table>
+  <p>
+    Live conclusions: the shipped wrapper cuts ~2.2 min off the old pipeline on identical inputs (368s → 236s,
+    −36%) <i>and</i> fixes a 0/3 fidelity disaster on occupied rooms. On composer-2.5 the typical render sits at
+    ~3–4 min, still above the 2–3 min target — the remaining time is the model itself. The model-comparison harness
+    (<code>experiments/model-comparison/RESULTS.md</code>) measured <b>claude-opus-4-8 at 142–174s per stage render
+    vs composer-2.5's 314–378s, with the best architectural fidelity of all four models tested</b> — so production
+    now defaults to <code>CURSOR_MODEL=claude-opus-4-8</code>, which puts expected one-shot renders at
+    <b>~2.5–3 min</b> (boot ~1 min + one ~150s generation + quick verify), inside the target. A dedicated live
+    timing batch for opus-4-8 hit the account's usage hard-limit mid-session (<code>usage_limit_exceeded</code>)
+    and could not complete — raise the limit and re-run
+    <code>LIVE_MODEL=claude-opus-4-8 node --experimental-strip-types experiments/pipeline-v2/live-timing.mjs
+    --variant norepo-stage --runs 3</code> to confirm on this fixture.
+  </p>
+  <div class="imgrow">
+    <figure>
+      <img src="runs-live/old-stage-run1.jpg" alt="old wrapper live: bunks replaced">
+      <figcaption><b>LIVE · old wrapper</b> (244s): the bunk beds are gone — replaced by a staged double bed.
+      This happened in 3 of 3 old-wrapper runs.</figcaption>
+    </figure>
+    <figure>
+      <img src="runs-live/new-stage-run2.jpg" alt="new wrapper live: additions only">
+      <figcaption><b>LIVE · shipped wrapper</b> (184s): bunks, carpet, Greek-key rug, radiator all intact;
+      dresser, lamp, shelf, pouf added. Delivered 1024×1536.</figcaption>
+    </figure>
+    <figure>
+      <img src="runs-live/new-enhance-run2.jpg" alt="enhance live">
+      <figcaption><b>LIVE · enhance</b> (187s): blur and exposure fixed, sky recovered, nothing moved.</figcaption>
+    </figure>
+    <figure>
+      <img src="runs-live/norepo-fast-stage-run1.jpg" alt="fast param failure">
+      <figcaption><b>LIVE · <code>fast</code> param</b> (189s): fast, but it invented a different room
+      (wood floor, double bed, brownstone view) — why it was rejected.</figcaption>
+    </figure>
+  </div>
+
+  <h2>4b · Latency: where 5–7 minutes went, and how it becomes 2–3</h2>
   <table>
     <tr><th>Stage</th><th>Old pipeline (measured, docs)</th><th>New pipeline (shipped)</th></tr>
     <tr><td>Preprocess (sharp) + create agent API</td><td>~5s</td><td>~5s (unchanged)</td></tr>
@@ -215,6 +294,18 @@
       <b>6 · 3s artifact polling</b><br>
       Marginal but free — the artifact is grabbed as soon as it appears, before the agent formally finishes.
     </div>
+    <div class="card">
+      <b>7 · Repo-less render agents (live-validated)</b><br>
+      <code>POST /v1/agents</code> works without a <code>repos</code> field: live runs show identical speed and
+      fidelity, so cloning the <code>images</code> repo every render was pure overhead. <code>CURSOR_REPO</code>
+      is now optional (empty = repo-less) and the connected-GitHub-repo requirement is gone.
+    </div>
+    <div class="card">
+      <b>8 · Default model → claude-opus-4-8</b><br>
+      Model-comparison measured it ~2x faster than composer-2.5 per render (142–174s vs 314–378s) with the best
+      architectural fidelity; combined with the new wrapper this is what brings typical renders into the 2–3 min
+      target. Set <code>CURSOR_MODEL</code> to override.
+    </div>
   </div>
 
   <h2>6 · Considered and rejected (for now)</h2>
@@ -236,10 +327,16 @@
     </tr>
     <tr>
       <td>Different agent model</td>
-      <td class="warn">Kept composer-2.5</td>
-      <td><code>experiments/model-comparison</code> already showed it cheapest/fastest with equal image quality —
-      the image tool does the pixel work; the agent model mostly needs to follow the wrapper. Re-run that harness
-      if models change.</td>
+      <td class="pass">ADOPTED: claude-opus-4-8</td>
+      <td>Initially deferred, reversed after live timing showed composer-2.5's generation step dominates the wall
+      clock. Model-comparison measured opus-4-8 ~2x faster per render with the best fidelity of the four models
+      tested — now the production default.</td>
+    </tr>
+    <tr>
+      <td><code>fast</code> model parameter</td>
+      <td class="fail">Rejected (live-tested)</td>
+      <td>3 live runs: one full room replacement, one &gt;10 min timeout. Speed when it worked (~205s) doesn't
+      justify the failure modes.</td>
     </tr>
     <tr>
       <td>Drop verification entirely (pure one-shot)</td>

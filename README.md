@@ -35,23 +35,26 @@ one cheap box.
 
 Each render spins up a Cursor cloud agent (`lib/cursorAgent.ts`):
 
-1. `POST /v1/agents` with the staging prompt + the room photo attached, on the
-   repo in `CURSOR_REPO`, using the model in `CURSOR_MODEL` (default
-   `composer-2.5`).
-2. The agent studies the photo, calls its image-generation tool with the photo
-   as the reference image, then compares the output against the original and
-   retries once if the architecture changed. Only the approved image is saved
-   into its `artifacts/` directory (it does not commit anything to the repo).
+1. `POST /v1/agents` with the staging prompt + the room photo attached
+   (repo-less by default; linked to `CURSOR_REPO` if you set one), using the
+   model in `CURSOR_MODEL` (default `claude-opus-4-8`).
+2. The agent immediately calls its image-generation tool with the photo as the
+   reference image (and the required output dimensions), then verifies the
+   result against the original and regenerates at most once if a hard
+   constraint drifted (`enhance` never retries). Only the approved image is
+   saved into its `artifacts/` directory.
 3. The app polls the run, lists artifacts when it finishes, downloads the
-   image via a presigned URL, and archives the agent.
+   image via a presigned URL, cover-resizes it to the exact dimensions of the
+   upload, and archives the agent.
 
-Requirements: a Cursor API key, and a GitHub repo (default
-`sid-081205/images`) that is non-empty and connected to Cursor's GitHub app.
+Requirements: just a Cursor API key. (`CURSOR_REPO` is optional; if set, the
+repo must be non-empty and connected to Cursor's GitHub app.)
 
-The model is set by `CURSOR_MODEL` (default `composer-2.5`). To decide which
-model gives the best images, use the comparison harness in
-`experiments/model-comparison/` — it renders the same photo through every model
-you list and builds a side-by-side gallery. See its README.
+The model is set by `CURSOR_MODEL` (default `claude-opus-4-8`, measured ~2x
+faster than `composer-2.5` per render with the best architectural fidelity —
+see `experiments/model-comparison/RESULTS.md`). To compare models, use the
+harness in `experiments/model-comparison/` — it renders the same photo through
+every model you list and builds a side-by-side gallery. See its README.
 
 ## Try it right now (sandbox)
 
@@ -83,8 +86,8 @@ Fill in `.env`:
 | Variable | What |
 | --- | --- |
 | `CURSOR_API_KEY` | From cursor.com → Settings → API keys. |
-| `CURSOR_REPO` | GitHub repo URL the render agents run against. Must have at least one commit and be connected to Cursor's GitHub app. |
-| `CURSOR_MODEL` | Agent model, default `composer-2.5` (cheap + fast). `GET https://api.cursor.com/v1/models` lists options. |
+| `CURSOR_REPO` | Optional. GitHub repo URL the render agents run against; leave empty (or `none`) for repo-less agents. If set, it must have at least one commit and be connected to Cursor's GitHub app. |
+| `CURSOR_MODEL` | Agent model, default `claude-opus-4-8` (fastest with best fidelity in our tests). `GET https://api.cursor.com/v1/models` lists options. |
 | `STRIPE_SECRET_KEY` | From the [Stripe dashboard](https://dashboard.stripe.com/apikeys). Currently a test key — swap for `sk_live_…` at launch. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Matching publishable key. |
 | `STRIPE_WEBHOOK_SECRET` | From `stripe listen` (dev) or a dashboard webhook endpoint pointed at `/api/webhooks/stripe`. Optional — redirect-time verification works without it — but recommended in production. |
@@ -127,7 +130,7 @@ Stripe session id, so verify + webhook can both fire without double-granting.
 
 ## Unit economics
 
-- A render = one short cloud-agent run on `composer-2.5` plus one image
+- A render = one short cloud-agent run on `CURSOR_MODEL` plus one image
   generation — roughly $0.05–0.15 depending on run length.
 - A $3 pack (10 renders): ~$0.50–1.50 generation cost + ~$0.39 Stripe fee
   (2.9% + 30¢) → roughly 35–70% gross margin. Watch actual per-render agent
