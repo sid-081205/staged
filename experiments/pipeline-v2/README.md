@@ -19,7 +19,8 @@ Contents:
 - `live-timing.mjs` — LIVE end-to-end harness against the real Cloud Agents
   API (needs `CURSOR_API_KEY`): old vs new wrapper, repo-less, `fast` param,
   model override via `LIVE_MODEL`. Per-run wall clock + status timeline.
-- `runs-live/` — the 16 live renders + `timings.json` (2026-07-11 session).
+- `runs-live/` — the 19 live renders + `timings.json` (2026-07-11 sessions;
+  runs 11–13 of `norepo-stage` are the Auto-model tests).
 
 As with the other experiment folders: never import this from the Next app;
 promote winners into `lib/config.ts` / `lib/cursorAgent.ts` only.

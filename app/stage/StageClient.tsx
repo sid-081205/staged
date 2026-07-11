@@ -613,7 +613,7 @@ function PhotoCard({
             {processing.map((r) => (
               <div key={r.id} className="overflow-hidden rounded-2xl border border-line">
                 <div className="flex aspect-[4/3] w-full animate-pulse items-center justify-center bg-paper-2">
-                  <span className="text-sm text-muted">Takes 2–3 minutes…</span>
+                  <span className="text-sm text-muted">Takes about 4 minutes…</span>
                 </div>
                 <div className="px-3 py-2 text-xs text-muted">
                   {modeLabel(r.style)} · we&rsquo;ll notify you when done

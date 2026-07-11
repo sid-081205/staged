@@ -582,5 +582,127 @@
       }
     ],
     "file": "v3-stage-run3.jpg"
+  },
+  {
+    "variant": "norepo-stage",
+    "run": 11,
+    "agentId": "bc-0d8c4e3b-ec24-44dd-aeae-232bf6b9a7be",
+    "ok": true,
+    "totalSec": 236.4,
+    "rawDimensions": "1024x1536",
+    "deliveredDimensions": "1024x1536",
+    "matchesInput": true,
+    "dimensionLocked": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 3222
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 6412
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 236170
+      },
+      {
+        "label": "artifact available",
+        "atMs": 236171
+      },
+      {
+        "label": "downloaded",
+        "atMs": 236388
+      },
+      {
+        "label": "delivered",
+        "atMs": 236418
+      }
+    ],
+    "file": "norepo-stage-run11.jpg"
+  },
+  {
+    "variant": "norepo-stage",
+    "run": 12,
+    "agentId": "bc-07506802-ff08-4c82-a7d2-cc914714b23a",
+    "ok": true,
+    "totalSec": 232.1,
+    "rawDimensions": "1024x1536",
+    "deliveredDimensions": "1024x1536",
+    "matchesInput": true,
+    "dimensionLocked": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2484
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5734
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 8906
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 231665
+      },
+      {
+        "label": "artifact available",
+        "atMs": 231665
+      },
+      {
+        "label": "downloaded",
+        "atMs": 232062
+      },
+      {
+        "label": "delivered",
+        "atMs": 232093
+      }
+    ],
+    "file": "norepo-stage-run12.jpg"
+  },
+  {
+    "variant": "norepo-stage",
+    "run": 13,
+    "agentId": "bc-7759ea81-e10d-4575-b7ad-1aa1ffefd1b9",
+    "ok": true,
+    "totalSec": 329.2,
+    "rawDimensions": "1024x1536",
+    "deliveredDimensions": "1024x1536",
+    "matchesInput": true,
+    "dimensionLocked": true,
+    "timeline": [
+      {
+        "label": "agent created",
+        "atMs": 2276
+      },
+      {
+        "label": "status CREATING",
+        "atMs": 5439
+      },
+      {
+        "label": "status RUNNING",
+        "atMs": 8658
+      },
+      {
+        "label": "status FINISHED",
+        "atMs": 328828
+      },
+      {
+        "label": "artifact available",
+        "atMs": 328829
+      },
+      {
+        "label": "downloaded",
+        "atMs": 329197
+      },
+      {
+        "label": "delivered",
+        "atMs": 329228
+      }
+    ],
+    "file": "norepo-stage-run13.jpg"
   }
 ]

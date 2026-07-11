@@ -9,7 +9,8 @@ import sharp from "sharp";
  * to save the generated image into the agent's artifacts directory. We poll
  * the run until it finishes, then download the artifact via a presigned URL.
  *
- * Latency design (target: 2–3 min wall clock, was 5–7 min):
+ * Latency design (live-measured ~4 min avg on composer-2.5, was 5–7 min;
+ * ~2.5 min if CURSOR_MODEL is set to a plan-available faster model):
  * - The agent is told to call the image tool as its FIRST action — no
  *   written scene inventory before generating (saved ~30–60s).
  * - The verify-against-original step is kept (it is the product's fidelity
@@ -33,18 +34,18 @@ const API = "https://api.cursor.com";
 // repo URL to keep the old behavior.
 const REPO_RAW = (process.env.CURSOR_REPO || "").trim();
 const REPO = REPO_RAW && REPO_RAW.toLowerCase() !== "none" ? REPO_RAW : null;
-// Which Cursor model runs the render. Default is claude-opus-4-8: the
-// model-comparison harness measured it ~2x faster than composer-2.5 per stage
-// render (142–174s vs 314–378s) with the best architectural fidelity, which
-// is what puts typical renders inside the 2–3 minute target. Override with
-// CURSOR_MODEL in .env; `node experiments/model-comparison/run.mjs --list`
-// shows valid ids and the harness compares image output. Watch per-render
-// cost after model changes (see README unit economics).
-const MODEL = (process.env.CURSOR_MODEL || "claude-opus-4-8").trim();
+// Which Cursor model runs the render. Default composer-2.5 (cheap, and the
+// fastest of the plan-available options in live tests: stage renders avg
+// ~236s with the current wrapper vs ~305s+ on Auto). claude-opus-4-8 measured
+// ~2x faster with the best fidelity in model-comparison, but is not available
+// on all plans — set CURSOR_MODEL to it if your account has access. Run
+// `node experiments/model-comparison/run.mjs --list` to see valid ids.
+const MODEL = (process.env.CURSOR_MODEL || "composer-2.5").trim();
 
 const POLL_INTERVAL_MS = 3_000;
-// Safety net only — typical renders should finish in 2–3 minutes now that the
-// agent generates immediately and retries at most once.
+// Safety net only — live-measured typical renders are ~3–4.5 min on
+// composer-2.5 now that the agent generates immediately and retries at most
+// once (worst case with the one retry ~6 min).
 const TIMEOUT_MS = 8 * 60_000;
 
 /** Long-edge cap for the image sent to the model. */

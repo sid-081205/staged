@@ -31,7 +31,7 @@ const faq: [string, string][] = [
   ],
   [
     "How does the AI staging actually work?",
-    "Each render runs as a small supervised process, not a single blind AI call. The model first locks onto your photo's fixed features (windows, walls, floors, camera angle), then edits the image in place under a strict list of things it may never change. Before you see the result, it is compared against your original photo, and if the architecture drifted it is regenerated once with a correction. Most renders finish in 2 to 3 minutes.",
+    "Each render runs as a small supervised process, not a single blind AI call. The model first locks onto your photo's fixed features (windows, walls, floors, camera angle), then edits the image in place under a strict list of things it may never change. Before you see the result, it is compared against your original photo, and if the architecture drifted it is regenerated once with a correction. Most renders finish in about 4 minutes.",
   ],
   [
     "What photos work best?",

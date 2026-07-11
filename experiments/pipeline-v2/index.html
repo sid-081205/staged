@@ -169,7 +169,7 @@
     <b>Update:</b> after the first version of this report, a real <code>CURSOR_API_KEY</code> was provided and the
     full production path was measured live with <code>live-timing.mjs</code> — real agent VMs, real
     <code>POST /v1/agents</code>, the exact production prompts and post-processing, on the same portrait bedroom
-    fixture. 16 live renders total (raw outputs in <code>runs-live/</code>, timings in
+    fixture. 19 live renders total across two sessions (raw outputs in <code>runs-live/</code>, timings in
     <code>runs-live/timings.json</code>). Runs within a variant were launched in parallel; each number is one
     agent's own wall clock from create to delivered image.
   </div>
@@ -209,19 +209,23 @@
       <td class="pass">3/3 faithful, but no speed win over the shipped wrapper — <b>not adopted</b> (sample
       overlaps; extra wording buys nothing).</td>
     </tr>
+    <tr>
+      <td><b>Auto routing</b> (<code>model: default</code>, NEW wrapper, repo-less)</td>
+      <td>236s · 232s · 329s</td><td class="warn">266s</td>
+      <td class="warn">2/3 faithful; 1 run swapped the Greek-key rug and two showed curtain/radiator drift.
+      Slower on average than pinning composer-2.5 and less predictable — <b>rejected</b>.</td>
+    </tr>
   </table>
   <p>
     Live conclusions: the shipped wrapper cuts ~2.2 min off the old pipeline on identical inputs (368s → 236s,
-    −36%) <i>and</i> fixes a 0/3 fidelity disaster on occupied rooms. On composer-2.5 the typical render sits at
-    ~3–4 min, still above the 2–3 min target — the remaining time is the model itself. The model-comparison harness
-    (<code>experiments/model-comparison/RESULTS.md</code>) measured <b>claude-opus-4-8 at 142–174s per stage render
-    vs composer-2.5's 314–378s, with the best architectural fidelity of all four models tested</b> — so production
-    now defaults to <code>CURSOR_MODEL=claude-opus-4-8</code>, which puts expected one-shot renders at
-    <b>~2.5–3 min</b> (boot ~1 min + one ~150s generation + quick verify), inside the target. A dedicated live
-    timing batch for opus-4-8 hit the account's usage hard-limit mid-session (<code>usage_limit_exceeded</code>)
-    and could not complete — raise the limit and re-run
-    <code>LIVE_MODEL=claude-opus-4-8 node --experimental-strip-types experiments/pipeline-v2/live-timing.mjs
-    --variant norepo-stage --runs 3</code> to confirm on this fixture.
+    −36%) <i>and</i> fixes a 0/3 fidelity disaster on occupied rooms. The remaining wall clock is the model itself,
+    and the account plan constrains the choice to <b>composer-2.5 or Auto</b>: Auto was live-tested (266s avg,
+    2/3 faithful) and lost to pinned composer-2.5 (236s avg, 3/3 faithful) on both speed and predictability, so
+    <b>production stays on composer-2.5</b>. That puts honest expectations at <b>~4 min typical</b> (3:04–4:37
+    one-shot spread, ~6 min worst case with the one retry) — user-facing copy was updated from "2–3 minutes" to
+    "about 4 minutes". For reference, <code>claude-opus-4-8</code> measured 142–174s per render with the best
+    fidelity in model-comparison and would land ~2.5 min renders — if the plan ever includes it, switching is a
+    one-line <code>CURSOR_MODEL</code> change.
   </p>
   <div class="imgrow">
     <figure>
@@ -301,10 +305,11 @@
       is now optional (empty = repo-less) and the connected-GitHub-repo requirement is gone.
     </div>
     <div class="card">
-      <b>8 · Default model → claude-opus-4-8</b><br>
-      Model-comparison measured it ~2x faster than composer-2.5 per render (142–174s vs 314–378s) with the best
-      architectural fidelity; combined with the new wrapper this is what brings typical renders into the 2–3 min
-      target. Set <code>CURSOR_MODEL</code> to override.
+      <b>8 · Model stays composer-2.5; honest timing copy</b><br>
+      The plan allows composer-2.5 or Auto; live tests picked composer-2.5 (faster avg, 3/3 vs 2/3 fidelity).
+      UI/FAQ copy updated from "2–3 minutes" to "about 4 minutes" to match the live median.
+      <code>claude-opus-4-8</code> (~2.5 min renders, best fidelity) is a one-line <code>CURSOR_MODEL</code>
+      switch if the plan ever includes it.
     </div>
   </div>
 
@@ -327,10 +332,11 @@
     </tr>
     <tr>
       <td>Different agent model</td>
-      <td class="pass">ADOPTED: claude-opus-4-8</td>
-      <td>Initially deferred, reversed after live timing showed composer-2.5's generation step dominates the wall
-      clock. Model-comparison measured opus-4-8 ~2x faster per render with the best fidelity of the four models
-      tested — now the production default.</td>
+      <td class="warn">Constrained: composer-2.5</td>
+      <td>The generation step dominates wall clock and opus-4-8 measured ~2x faster with best fidelity — but the
+      account plan only includes composer-2.5 and Auto. Auto live-tested slower and less faithful (266s avg, 2/3)
+      than pinned composer-2.5 (236s avg, 3/3), so composer-2.5 stays. Revisit <code>CURSOR_MODEL</code> if the
+      plan changes.</td>
     </tr>
     <tr>
       <td><code>fast</code> model parameter</td>
