@@ -31,21 +31,58 @@ one cheap box.
 - **MLS compliance** — downloads have an optional "VIRTUALLY STAGED"
   disclosure label toggle (most MLSs require disclosure).
 
-## Image generation: Cursor Cloud Agents
+## Image generation: how the pipeline works
 
-Each render spins up a Cursor cloud agent (`lib/cursorAgent.ts`):
+Every render goes through the same five stages in `lib/cursorAgent.ts`
+(`stagePhoto()`), built from two prompt layers plus pre/post-processing.
+The design was benchmarked with 29 live renders — see
+`experiments/pipeline-v2/index.html` (bedroom, staging) and
+`experiments/kitchen-enhance-lab/index.html` (kitchen, fix-lighting).
 
-1. `POST /v1/agents` with the staging prompt + the room photo attached
-   (repo-less by default; linked to `CURSOR_REPO` if you set one), using the
-   model in `CURSOR_MODEL` (default `composer-2.5`).
-2. The agent immediately calls its image-generation tool with the photo as the
-   reference image (and the required output dimensions), then verifies the
-   result against the original and regenerates at most once if a hard
-   constraint drifted (`enhance` never retries). Only the approved image is
-   saved into its `artifacts/` directory.
-3. The app polls the run, lists artifacts when it finishes, downloads the
-   image via a presigned URL, cover-resizes it to the exact dimensions of the
-   upload, and archives the agent.
+**1. Preprocess** (`preprocessInput`). The upload is EXIF-rotated, resized to
+at most 2048px on the long edge (never enlarged), and re-encoded as JPEG. The
+resulting exact width x height is recorded — it becomes the contract for the
+final output. Any input shape works: portrait, landscape, square.
+
+**2. Build the image instruction** (Layer A, `buildPrompt()` in
+`lib/config.ts`). Per-service wording (stage / declutter / enhance) plus the
+**hard constraints** block — an explicit DO-NOT list covering windows, walls,
+floors, ceilings, doors, fixtures, camera position, aspect ratio/orientation,
+and room identity. Staging is "additions only"; enhance ("Fix lighting") uses
+a professional-photo-editor wording (color-cast neutralization, exposure
+balance, shadow lift, fixture de-glare, deblur/denoise, texture preservation)
+that went 3/3 on fidelity in the kitchen lab. Free-text user requests are
+appended but can never override the hard constraints.
+
+**3. Wrap it for the agent** (Layer B, `buildAgentPrompt()`). The agent is
+told to call its image tool **immediately** in image-to-image mode with the
+photo as reference (no scene-inventory step — saves 30-60s), with the exact
+output dimensions injected. Then a **gated verification**: compare the result
+against the original and regenerate **at most once**, only if a hard
+constraint visibly drifted; `enhance` never regenerates (tonal change is the
+point). Don't remove this step to save time — in the kitchen lab, variants
+without a working check shipped a completely fabricated room in 1 of 2 runs.
+Only the approved image goes into the agent's `artifacts/` directory.
+
+**4. Run and poll.** `POST /v1/agents` with the prompt + photo attached,
+repo-less by default (no clone overhead; set `CURSOR_REPO` to pin one), on
+`CURSOR_MODEL` (default `composer-2.5`). The app polls run status + artifacts
+every 3s, downloads the image via a presigned URL, then cancels and archives
+the agent.
+
+**5. Dimension lock** (`lockToDimensions`). The model returns its own
+resolution (typically 1536x1024), so the artifact is cover-resized to the
+**exact dimensions recorded in step 1** — the output always matches the
+upload's size and orientation. Free-preview renders get watermarked after
+this (`lib/images.ts`).
+
+Renders run as fire-and-forget background work: `/api/generate` reserves the
+credit and responds immediately with a `processing` render; the pipeline
+finishes in the Node process (refunding on failure), while the client polls
+`/api/renders/status`. Live timings on `composer-2.5`: **~3 min** for
+fix-lighting (168-217s observed), **~4 min** for staging, worst case one
+retry inside the same agent; `/api/generate` caps at 600s and refunds on
+timeout.
 
 Requirements: just a Cursor API key. (`CURSOR_REPO` is optional; if set, the
 repo must be non-empty and connected to Cursor's GitHub app.)
