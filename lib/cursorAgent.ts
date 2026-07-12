@@ -16,7 +16,10 @@ import sharp from "sharp";
  * - The verify-against-original step is kept (it is the product's fidelity
  *   moat) but capped at ONE regeneration, and `enhance` never regenerates
  *   (global tonal edits don't drift architecture; a retry just doubles time).
- * - Artifacts are polled every 3s instead of 5s.
+ * - Run status is polled every 3s (one request per tick — artifacts only sync
+ *   when the agent finishes, so they're listed once on FINISHED). Exactly one
+ *   agent is created per render; keeps well inside the 300 req/min key limit,
+ *   and transient 429/5xx during polling are skipped, not fatal.
  *
  * Dimension lock: the output always matches the preprocessed input's exact
  * width×height. The agent is told the required aspect/orientation up front,
@@ -110,27 +113,50 @@ function orientationWord(width: number, height: number): string {
  * The wrapper around the image-tool instruction. Tuned for speed: the agent
  * must generate first (no written analysis), verify once, and regenerate at
  * most once — never for `enhance`.
+ *
+ * Reference file: images attached via the agents API are visible to the
+ * model but are NOT written to the VM's disk, so the image tool has no file
+ * path to use as its reference — agents were observed searching the
+ * filesystem for minutes and then generating the room from a text
+ * description (the fabrication failure mode). When `referenceUrl` is set
+ * (production, public SITE_URL), Step 1 is a curl download of the exact
+ * preprocessed photo so the tool always edits the real pixels. Without a URL
+ * (local dev) we fall back to attachment-only and explicitly forbid
+ * filesystem searching.
  */
 export function buildAgentPrompt(
   prompt: string,
-  opts: { width: number; height: number; service?: string }
+  opts: { width: number; height: number; service?: string; referenceUrl?: string | null }
 ): string {
-  const { width, height, service } = opts;
+  const { width, height, service, referenceUrl } = opts;
   const orientation = orientationWord(width, height);
   const dimensionLine = `OUTPUT DIMENSIONS: the reference photo is ${width}×${height} pixels (${orientation}). The output image MUST keep this exact aspect ratio and ${orientation} orientation. Do not crop to a different shape, do not letterbox, do not change the framing.`;
 
   const verifyStep =
     service === "enhance"
-      ? "Step 2: Confirm the generated image kept the same objects, architecture and orientation as the original photo. Do NOT regenerate for tonal differences — lighting changes are the point. Deliver it."
+      ? "Step 3: Confirm the generated image kept the same objects, architecture and orientation as the original photo. Do NOT regenerate for tonal differences — lighting changes are the point. Deliver it."
       : [
-          "Step 2: VERIFY quickly — open the generated image next to the original photo. It fails ONLY if one of these clearly changed: window frames/panes/outdoor view, wall color, floor, ceiling, trim, doors, radiators, built-ins, camera position/perspective/crop, or the orientation (portrait vs landscape) — or if a specifically requested item is missing or wrong.",
+          "Step 3: VERIFY quickly — open the generated image next to the original photo. It fails ONLY if one of these clearly changed: window frames/panes/outdoor view, wall color, floor, ceiling, trim, doors, radiators, built-ins, camera position/perspective/crop, or the orientation (portrait vs landscape) — or if a specifically requested item is missing or wrong.",
           "If it fails, regenerate EXACTLY ONCE: same instruction plus one sentence correcting what drifted. Then deliver the more faithful of the two images. Never make a third image. If it passes, deliver it immediately.",
         ].join("\n");
 
+  const getReferenceStep = referenceUrl
+    ? [
+        `Step 1: Download the room photo onto disk — run exactly: curl -fsS -o room.jpg '${referenceUrl}'`,
+        "This is the ONLY terminal command you may run. Confirm room.jpg is a non-empty JPEG. Do not search the filesystem for any other copy of the photo.",
+        "",
+        "Step 2: Call your image generation tool in image-to-image / edit mode. You MUST pass room.jpg as the reference image (use its file path in the tool's reference image parameter). Give the tool this instruction:",
+      ].join("\n")
+    : [
+        "Step 1: The room photo is the image attached to this prompt. It does NOT exist as a file on disk — do NOT search the filesystem for it, do NOT run find/grep/ls, and do NOT call any MCP or diagnostic tools.",
+        "",
+        "Step 2: IMMEDIATELY call your image generation tool in image-to-image / edit mode. If the tool accepts the attached image as a reference, pass it; otherwise reproduce the attached photo's content exactly from what you see. Give the tool this instruction:",
+      ].join("\n");
+
   return [
-    "You are an image editing worker for a real estate photo service. Your ONLY task is to produce one edited image from the attached room photo, fast. Do NOT explore the repository, do NOT read files, do NOT run git commands, and do NOT write any scene analysis or inventory.",
+    "You are an image editing worker for a real estate photo service. Your ONLY task is to produce one edited image from the room photo, fast. Do NOT explore the repository, do NOT read files, do NOT run git commands, do NOT use MCP tools, and do NOT write any scene analysis or inventory.",
     "",
-    "Step 1: IMMEDIATELY — as your first action — call your image generation tool in image-to-image / edit mode. You MUST pass the attached room photo as the reference image (use its file path in the tool's reference image parameter). Give the tool this instruction:",
+    getReferenceStep,
     "",
     prompt,
     "",
@@ -138,12 +164,17 @@ export function buildAgentPrompt(
     "",
     verifyStep,
     "",
-    "Step 3: Save ONLY the delivered image into the artifacts directory at the workspace root (a filename ending in .png or .jpg). Never place a rejected image in artifacts; keep rejected attempts outside it.",
-    "Step 4: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR.",
+    "Step 4: Save ONLY the delivered image into the artifacts directory at the workspace root (a filename ending in .png or .jpg). Never place a rejected image in artifacts; keep rejected attempts outside it.",
+    "Step 5: Reply DONE and stop immediately. Do not commit, do not push, do not open a PR.",
   ].join("\n");
 }
 
-export async function stagePhoto(inputPath: string, prompt: string, styleKey?: string): Promise<Buffer> {
+export async function stagePhoto(
+  inputPath: string,
+  prompt: string,
+  styleKey?: string,
+  opts?: { referenceUrl?: string | null }
+): Promise<Buffer> {
   if (process.env.MOCK_GENERATION === "1") {
     // Emulate real generation latency (real renders take 1–5 min) so the
     // background-progress flow is observable locally. Tunable / zero-able.
@@ -166,7 +197,12 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
   // Renders store a furniture style key for staging or the service key for
   // declutter/enhance; only "enhance"/"declutter" matter to the wrapper.
   const service = styleKey === "enhance" || styleKey === "declutter" ? styleKey : "stage";
-  const agentPrompt = buildAgentPrompt(prompt, { width, height, service });
+  const agentPrompt = buildAgentPrompt(prompt, {
+    width,
+    height,
+    service,
+    referenceUrl: opts?.referenceUrl ?? null,
+  });
 
   const created = await api<{ agent: { id: string }; run: { id: string } }>("/v1/agents", {
     method: "POST",
@@ -186,25 +222,41 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
   const runId = created.run.id;
 
   try {
-    // Poll artifacts alongside run status: the image usually exists well
-    // before the agent formally finishes, so grab it as soon as it appears.
+    // Poll run status only (1 request per tick — the artifact is saved as the
+    // agent's last action before it replies DONE, so listing artifacts on
+    // every tick doubles the request rate for nothing; the 300 req/min key
+    // limit is shared by all concurrent renders). The moment the run turns
+    // FINISHED we fetch the artifact list.
     const deadline = Date.now() + TIMEOUT_MS;
     let status = "CREATING";
-    let image: { path: string; sizeBytes: number } | undefined;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-      const [run, artifacts] = await Promise.all([
-        api<{ status: string }>(`/v1/agents/${agentId}/runs/${runId}`),
-        api<{ items: { path: string; sizeBytes: number }[] }>(`/v1/agents/${agentId}/artifacts`).catch(
-          () => ({ items: [] as { path: string; sizeBytes: number }[] })
-        ),
-      ]);
+      // Transient API failures (429 rate limit, 5xx) must not kill a render
+      // whose agent is still working — skip the tick and poll again.
+      let run: { status: string };
+      try {
+        run = await api<{ status: string }>(`/v1/agents/${agentId}/runs/${runId}`);
+      } catch {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        continue;
+      }
       status = run.status;
-      image = artifacts.items
-        .filter((a) => /\.(png|jpe?g|webp)$/i.test(a.path) && a.sizeBytes > 10_000)
-        .sort((a, b) => b.sizeBytes - a.sizeBytes)[0];
-      if (image) break;
       if (["FINISHED", "ERROR", "EXPIRED", "CANCELLED"].includes(status)) break;
+    }
+
+    // Grab the image as soon as the agent is done. A few retries in case the
+    // last artifact sync lags a moment behind the FINISHED status.
+    let image: { path: string; sizeBytes: number } | undefined;
+    if (status === "FINISHED") {
+      for (let attempt = 0; attempt < 5 && !image; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 2_000));
+        const artifacts = await api<{ items: { path: string; sizeBytes: number }[] }>(
+          `/v1/agents/${agentId}/artifacts`
+        ).catch(() => ({ items: [] as { path: string; sizeBytes: number }[] }));
+        image = artifacts.items
+          .filter((a) => /\.(png|jpe?g|webp)$/i.test(a.path) && a.sizeBytes > 10_000)
+          .sort((a, b) => b.sizeBytes - a.sizeBytes)[0];
+      }
     }
 
     if (!image) {
@@ -224,14 +276,10 @@ export async function stagePhoto(inputPath: string, prompt: string, styleKey?: s
     if (!download.ok) throw new Error(`Artifact download failed (${download.status}).`);
     const bytes = Buffer.from(await download.arrayBuffer());
 
-    // The agent has served its purpose once the image is out; stop it early
-    // if it is still running so it doesn't keep spending.
-    api(`/v1/agents/${agentId}/runs/${runId}/cancel`, { method: "POST" }).catch(() => {});
-
     // Deliver at exactly the preprocessed input's dimensions.
     return await lockToDimensions(bytes, width, height);
   } finally {
     // Best-effort cleanup so render agents don't pile up in the dashboard.
-    api(`/v1/agents/${agentId}/archive`, { method: "POST" }).catch(() => {});
+    await api(`/v1/agents/${agentId}/archive`, { method: "POST" }).catch(() => {});
   }
 }

@@ -92,7 +92,7 @@ export default function RenderTracker() {
                 {item.status === "failed" && <p className="font-medium">Render failed</p>}
                 {item.status === "processing" && (
                   <p className="mt-0.5 text-muted">
-                    Takes about 4 minutes. We&rsquo;ll notify you when it&rsquo;s done.
+                    Takes 2&ndash;3 minutes. We&rsquo;ll notify you when it&rsquo;s done.
                   </p>
                 )}
                 <p className="mt-0.5 truncate text-muted">

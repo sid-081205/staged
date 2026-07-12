@@ -15,6 +15,7 @@ import {
   sanitizeExtraPrompt,
 } from "@/lib/config";
 import { stagePhoto } from "@/lib/cursorAgent";
+import { renderInputUrl } from "@/lib/renderInputToken";
 import { currentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -103,6 +104,9 @@ export async function POST(req: NextRequest) {
     inputPath: photo.original_path,
     prompt: buildPrompt(service, style, roomType, extraPrompt),
     tag: styleColumn,
+    // Signed URL the agent curls to get the photo as a real file on its VM
+    // (attachments aren't materialized on disk). Null on non-public dev URLs.
+    referenceUrl: renderInputUrl(photoId),
   });
 
   return NextResponse.json({
@@ -123,10 +127,11 @@ async function runRender(args: {
   inputPath: string;
   prompt: string;
   tag: string;
+  referenceUrl: string | null;
 }) {
-  const { renderId, userId, reservedCredit, inputPath, prompt, tag } = args;
+  const { renderId, userId, reservedCredit, inputPath, prompt, tag, referenceUrl } = args;
   try {
-    const output = await stagePhoto(inputPath, prompt, tag);
+    const output = await stagePhoto(inputPath, prompt, tag, { referenceUrl });
     // Photo may have been deleted while we were generating.
     const stillThere = db.prepare("SELECT id FROM renders WHERE id = ?").get(renderId);
     if (!stillThere) {

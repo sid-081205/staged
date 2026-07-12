@@ -54,21 +54,30 @@ balance, shadow lift, fixture de-glare, deblur/denoise, texture preservation)
 that went 3/3 on fidelity in the kitchen lab. Free-text user requests are
 appended but can never override the hard constraints.
 
-**3. Wrap it for the agent** (Layer B, `buildAgentPrompt()`). The agent is
-told to call its image tool **immediately** in image-to-image mode with the
-photo as reference (no scene-inventory step — saves 30-60s), with the exact
-output dimensions injected. Then a **gated verification**: compare the result
-against the original and regenerate **at most once**, only if a hard
-constraint visibly drifted; `enhance` never regenerates (tonal change is the
-point). Don't remove this step to save time — in the kitchen lab, variants
-without a working check shipped a completely fabricated room in 1 of 2 runs.
-Only the approved image goes into the agent's `artifacts/` directory.
+**3. Wrap it for the agent** (Layer B, `buildAgentPrompt()`). Images attached
+via the agents API are visible to the model but are **not files on the
+agent's VM**, so the wrapper's Step 1 is a `curl` of a **signed, expiring
+URL** (`/api/render-input/:photoId`, HMAC via `lib/renderInputToken.ts`) that
+serves the exact preprocessed photo — the image tool always gets the real
+pixels as a reference file instead of a text description of them. The agent
+then calls its image tool **immediately** in image-to-image mode (no
+scene-inventory step — saves 30-60s), with the exact output dimensions
+injected. Then a **gated verification**: compare the result against the
+original and regenerate **at most once**, only if a hard constraint visibly
+drifted; `enhance` never regenerates (tonal change is the point). Don't
+remove this step to save time — in the kitchen lab, variants without a
+working check shipped a completely fabricated room in 1 of 2 runs. Only the
+approved image goes into the agent's `artifacts/` directory. (When `SITE_URL`
+isn't public https — local dev — the pipeline falls back to attachment-only.)
 
 **4. Run and poll.** `POST /v1/agents` with the prompt + photo attached,
 repo-less by default (no clone overhead; set `CURSOR_REPO` to pin one), on
-`CURSOR_MODEL` (default `composer-2.5`). The app polls run status + artifacts
-every 3s, downloads the image via a presigned URL, then cancels and archives
-the agent.
+`CURSOR_MODEL` (default `composer-2.5`). Exactly one agent per render. The
+app polls **run status only** every 3s (artifacts only sync when the agent
+finishes, and one request per tick stays far inside the key's 300 req/min
+limit; transient 429/5xx are skipped, not fatal). As soon as the run turns
+FINISHED it lists artifacts, downloads the image via a presigned URL, and
+archives the agent.
 
 **5. Dimension lock** (`lockToDimensions`). The model returns its own
 resolution (typically 1536x1024), so the artifact is cover-resized to the
@@ -79,9 +88,9 @@ this (`lib/images.ts`).
 Renders run as fire-and-forget background work: `/api/generate` reserves the
 credit and responds immediately with a `processing` render; the pipeline
 finishes in the Node process (refunding on failure), while the client polls
-`/api/renders/status`. Live timings on `composer-2.5`: **~3 min** for
-fix-lighting (168-217s observed), **~4 min** for staging, worst case one
-retry inside the same agent; `/api/generate` caps at 600s and refunds on
+`/api/renders/status`. Live timings on `composer-2.5` with the URL-downloaded
+reference: **~1.5–3 min** (96s, 99s, 171s observed end-to-end), worst case
+one retry inside the same agent; `/api/generate` caps at 600s and refunds on
 timeout.
 
 Requirements: just a Cursor API key. (`CURSOR_REPO` is optional; if set, the

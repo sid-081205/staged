@@ -16,9 +16,14 @@ Virtual staging for real estate listings (Next.js 16 App Router + SQLite). See
     logged to the server console and returned in the `/api/auth/login` response
     as `devCode`, and shown on the `/signin` page. This only happens when
     `NODE_ENV !== production`.
-  - Set `MOCK_GENERATION=1` to fake renders (a tinted copy via `sharp`, no
-    Cursor API key or credits used). Without it, `/api/generate` calls the
-    Cursor Cloud Agents API and needs a valid `CURSOR_API_KEY` + `CURSOR_REPO`.
+ - Set `MOCK_GENERATION=1` to fake renders (a tinted copy via `sharp`, no
+ Cursor API key or credits used). Without it, `/api/generate` calls the
+ Cursor Cloud Agents API and needs a valid `CURSOR_API_KEY` (`CURSOR_REPO`
+ is optional — repo-less by default). Real renders work best when `SITE_URL`
+ is public https: the agent curls a signed `/api/render-input/:photoId` URL
+ to get the photo as a real file for its image tool (attachments are not on
+ the agent VM's disk). On localhost it falls back to attachment-only, which
+ has weaker fidelity.
     NOTE: mock mode **ignores the prompt and style entirely** (it only applies a
     fixed tint), so you cannot judge real generation quality in mock mode —
     every style/prompt yields the same tinted image. Real renders take ~2 min
