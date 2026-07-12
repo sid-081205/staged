@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import fs from "node:fs";
 import path from "node:path";
-import { db, getJob, getPhoto, OUTPUTS_DIR } from "@/lib/db";
+import { db, getJob, getPhoto, getUser, OUTPUTS_DIR } from "@/lib/db";
 import {
   buildPrompt,
   FREE_PREVIEWS,
@@ -16,6 +16,7 @@ import {
 } from "@/lib/config";
 import { stagePhoto } from "@/lib/cursorAgent";
 import { currentUser } from "@/lib/auth";
+import { sendFirstPreviewReadyEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const maxDuration = 600;
@@ -138,6 +139,11 @@ async function runRender(args: {
       outputPath,
       renderId
     );
+
+    // One thank-you email the first time a free preview succeeds for this user.
+    if (!reservedCredit) {
+      await maybeSendFirstPreviewEmail(userId);
+    }
   } catch (err) {
     const stillThere = db.prepare("SELECT id FROM renders WHERE id = ?").get(renderId);
     if (!stillThere) return;
@@ -149,5 +155,29 @@ async function runRender(args: {
       db.prepare("UPDATE users SET free_used = free_used - 1 WHERE id = ? AND free_used > 0").run(userId);
     }
     db.prepare("UPDATE renders SET status = 'failed', error = ? WHERE id = ?").run(message, renderId);
+  }
+}
+
+/** Emails once when this is the user's first successful free (unpaid) preview. */
+async function maybeSendFirstPreviewEmail(userId: string): Promise<void> {
+  const row = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM renders r
+       JOIN jobs j ON j.id = r.job_id
+       WHERE j.user_id = ? AND r.paid = 0 AND r.status = 'done'`
+    )
+    .get(userId) as { n: number };
+  if (row.n !== 1) return;
+
+  const user = getUser(userId);
+  if (!user?.email) return;
+
+  try {
+    await sendFirstPreviewReadyEmail(user.email);
+  } catch (err) {
+    console.error(
+      `[staged] first-preview email failed for ${user.email}:`,
+      err instanceof Error ? err.message : err
+    );
   }
 }
