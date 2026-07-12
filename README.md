@@ -89,9 +89,9 @@ Renders run as fire-and-forget background work: `/api/generate` reserves the
 credit and responds immediately with a `processing` render; the pipeline
 finishes in the Node process (refunding on failure), while the client polls
 `/api/renders/status`. Live timings on `composer-2.5` with the URL-downloaded
-reference: **~1.5–3 min** (96s, 99s, 171s observed end-to-end), worst case
-one retry inside the same agent; `/api/generate` caps at 600s and refunds on
-timeout.
+reference: **typically 1–2 min** (96s, 99s, 171s observed end-to-end), worst
+case one retry inside the same agent; `/api/generate` caps at 600s and
+refunds on timeout.
 
 Requirements: just a Cursor API key. (`CURSOR_REPO` is optional; if set, the
 repo must be non-empty and connected to Cursor's GitHub app.)
