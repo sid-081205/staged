@@ -19,11 +19,11 @@ export async function watermarkPreview(image: Buffer): Promise<Buffer> {
     .then((r) => r.info);
 
   const tile = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240">
+    `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="220">
       <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
-        transform="rotate(-24 180 120)"
-        font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="600"
-        fill="#1c1917" fill-opacity="0.16">${escapeXml("STAGED · PREVIEW")}</text>
+        transform="rotate(-24 170 110)"
+        font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700"
+        fill="#1c1917" fill-opacity="0.38">${escapeXml("STAGED · PREVIEW")}</text>
     </svg>`
   );
 
