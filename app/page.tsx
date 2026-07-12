@@ -34,6 +34,10 @@ const faq: [string, string][] = [
     "Each render runs as a small supervised process, not a single blind AI call. The model first locks onto your photo's fixed features (windows, walls, floors, camera angle), then edits the image in place under a strict list of things it may never change. Before you see the result, it is compared against your original photo, and if the architecture drifted it is regenerated once with a correction. Most renders finish in about 4 minutes.",
   ],
   [
+    "Why is my image taking longer than expected to render?",
+    "On the most complex prompts, our system makes sure you get the best output possible. It recursively checks the result against your original photo and regenerates when needed, which takes longer. You can be assured it will eventually generate.",
+  ],
+  [
     "What photos work best?",
     "A straight on, well lit photo of the whole room, shot from a corner or doorway at chest height. Phone photos are fine, including iPhone HEIC files, and any orientation works: portrait, landscape or square. Sharp, evenly lit photos give the most faithful results; blurry or very dark photos still render, but with less convincing furniture detail.",
   ],
