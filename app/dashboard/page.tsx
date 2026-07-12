@@ -95,7 +95,7 @@ export default async function DashboardPage({
       <div className="flex flex-wrap items-center justify-between gap-3 py-8 sm:py-10">
         <h1 className="font-serif text-3xl sm:text-4xl">Your listings</h1>
         <Link
-          href="/stage"
+          href="/stage?new=1"
           className="rounded-xl border border-ink bg-ink px-5 py-2.5 text-paper transition-colors hover:bg-transparent hover:text-ink"
         >
           New listing

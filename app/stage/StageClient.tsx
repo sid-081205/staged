@@ -93,6 +93,12 @@ export default function StageClient() {
     const sessionId = params.get("session_id");
     const urlJob = params.get("job");
     const review = params.get("review");
+    // ?new=1 (the "New listing" button) starts a fresh listing instead of
+    // resuming the one remembered in localStorage.
+    if (params.get("new")) {
+      localStorage.removeItem(JOB_KEY);
+      window.history.replaceState({}, "", "/stage");
+    }
     const storedJob = localStorage.getItem(JOB_KEY);
     const jobId = urlJob || storedJob;
     if (review) {
