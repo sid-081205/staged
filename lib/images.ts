@@ -1,9 +1,33 @@
 import sharp from "sharp";
+import { LABEL_TEXT, WATERMARK_TEXT, TextPath } from "./textPaths";
 
 const PREVIEW_WIDTH = 1280;
 
-function escapeXml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/**
+ * Watermark / label text is composited as pre-traced SVG path outlines
+ * (lib/textPaths.ts) rather than SVG <text>: librsvg resolves <text> through
+ * the system's fontconfig, and on a server with no fonts installed every
+ * glyph renders as a tofu box (which is exactly what happened in production).
+ * Outlines need no fonts and render identically everywhere.
+ */
+
+/** <g> wrapping the traced text, scaled to `fontSize` and centered on (cx, cy). */
+function textPathGroup(
+  text: TextPath,
+  opts: { fontSize: number; cx: number; cy: number; fill: string; opacity?: number; rotate?: number }
+): string {
+  const s = opts.fontSize / 100; // paths were traced at font size 100
+  const midX = (text.x1 + text.x2) / 2;
+  const midY = (text.y1 + text.y2) / 2;
+  const rotate = opts.rotate ? ` rotate(${opts.rotate})` : "";
+  return `<g transform="translate(${opts.cx} ${opts.cy})${rotate} scale(${s}) translate(${-midX} ${-midY})">
+    <path d="${text.d}" fill="${opts.fill}"${opts.opacity !== undefined ? ` fill-opacity="${opts.opacity}"` : ""}/>
+  </g>`;
+}
+
+/** Traced text width in pixels at a given font size. */
+function textPathWidth(text: TextPath, fontSize: number): number {
+  return ((text.x2 - text.x1) * fontSize) / 100;
 }
 
 /** Diagonal repeating watermark for unpaid previews. */
@@ -20,10 +44,7 @@ export async function watermarkPreview(image: Buffer): Promise<Buffer> {
 
   const tile = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="220">
-      <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
-        transform="rotate(-24 170 110)"
-        font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700"
-        fill="#1c1917" fill-opacity="0.38">${escapeXml("STAGED · PREVIEW")}</text>
+      ${textPathGroup(WATERMARK_TEXT, { fontSize: 30, cx: 170, cy: 110, fill: "#1c1917", opacity: 0.38, rotate: -24 })}
     </svg>`
   );
 
@@ -34,8 +55,9 @@ export async function watermarkPreview(image: Buffer): Promise<Buffer> {
 }
 
 /**
- * Optional MLS disclosure label composited into the corner of paid downloads.
- * Most MLSs require virtually staged photos to be identified as such.
+ * Optional MLS disclosure label ("VIRTUALLY STAGED") composited into the
+ * corner of paid downloads. Most MLSs require virtually staged photos to be
+ * identified as such.
  */
 export async function addDisclosureLabel(image: Buffer): Promise<Buffer> {
   const meta = await sharp(image).metadata();
@@ -43,15 +65,12 @@ export async function addDisclosureLabel(image: Buffer): Promise<Buffer> {
   const fontSize = Math.max(14, Math.round(w * 0.014));
   const padX = Math.round(fontSize * 0.9);
   const boxH = Math.round(fontSize * 2.2);
-  const text = "VIRTUALLY STAGED";
-  const boxW = Math.round(text.length * fontSize * 0.62) + padX * 2;
+  const boxW = Math.round(textPathWidth(LABEL_TEXT, fontSize)) + padX * 2;
 
   const label = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${boxW}" height="${boxH}">
       <rect width="100%" height="100%" fill="#1c1917" fill-opacity="0.72"/>
-      <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
-        font-family="Helvetica, Arial, sans-serif" font-size="${fontSize}"
-        font-weight="600" letter-spacing="2" fill="#faf7f0">${text}</text>
+      ${textPathGroup(LABEL_TEXT, { fontSize, cx: boxW / 2, cy: boxH / 2, fill: "#faf7f0" })}
     </svg>`
   );
 
